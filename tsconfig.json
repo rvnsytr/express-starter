@@ -7,7 +7,8 @@
     "target": "es2023",
     "module": "preserve",
     "lib": ["esnext"],
-    "types": ["node"],
+    "types": ["node", "express"],
+    "typeRoots": ["./node_modules/@types", "express.d.ts"],
 
     // Other Outputs
     "sourceMap": true,
@@ -35,9 +36,8 @@
     "skipLibCheck": true,
 
     // Bundler mode
-    "moduleResolution": "bundler",
-    "verbatimModuleSyntax": true
+    "moduleResolution": "bundler"
   },
-  "include": ["src/**/*"],
+  "include": ["express.d.ts", "src/**/*"],
   "exclude": ["node_modules"]
 }
