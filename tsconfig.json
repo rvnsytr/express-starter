@@ -8,7 +8,7 @@
     "module": "preserve",
     "lib": ["esnext"],
     "types": ["node", "express"],
-    "typeRoots": ["./node_modules/@types", "express.d.ts"],
+    "typeRoots": ["./node_modules/@types", "types.d.ts"],
 
     // Other Outputs
     "sourceMap": true,
@@ -38,6 +38,6 @@
     // Bundler mode
     "moduleResolution": "bundler"
   },
-  "include": ["express.d.ts", "src/**/*"],
+  "include": ["types.d.ts", "src/**/*"],
   "exclude": ["node_modules"]
 }

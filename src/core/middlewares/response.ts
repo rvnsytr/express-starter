@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import z from "zod";
-import { apiResponseSchema } from "../schemas";
+import { apiResponseSchema } from "../schemas.zod";
 
 export type ApiResponse<T> = z.infer<typeof apiResponseSchema> & { data: T };
 
