@@ -1,5 +1,5 @@
 import "express-serve-static-core";
-import { ApiResponse } from "./src/core/response";
+import { ApiResponse } from "./src/core/middlewares/response";
 
 declare module "express-serve-static-core" {
   interface Response {
