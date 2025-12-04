@@ -1,0 +1,11 @@
+import { CorsOptions } from "cors";
+
+export const appMeta = {
+  name: process.env.APP_NAME ?? "Express Starter",
+
+  cors: {
+    origin: "http://localhost:3000",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  } satisfies CorsOptions,
+};

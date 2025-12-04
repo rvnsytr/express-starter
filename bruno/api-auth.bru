@@ -1,0 +1,27 @@
+meta {
+  name: /api/auth
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{host}}/api/auth/get-session
+  body: json
+  auth: inherit
+}
+
+headers {
+  Origin: http://localhost:3000
+}
+
+body:json {
+  {
+    "email": "example@example.ex",
+    "password": "Example#123"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

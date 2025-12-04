@@ -36,7 +36,10 @@
     "skipLibCheck": true,
 
     // Bundler mode
-    "moduleResolution": "bundler"
+    "moduleResolution": "bundler",
+
+    "baseUrl": "src",
+    "paths": { "@/*": ["*"] }
   },
   "include": ["types.d.ts", "src/**/*"],
   "exclude": ["node_modules"]

@@ -1,7 +1,9 @@
-export type Database = {
-  users: Users;
-};
+import { Account, Verification } from "better-auth";
+import { SessionWithImpersonatedBy, UserWithRole } from "better-auth/plugins";
 
-export type Users = {
-  id: string;
+export type Database = {
+  user: UserWithRole;
+  account: Account;
+  session: SessionWithImpersonatedBy;
+  verification: Verification;
 };
