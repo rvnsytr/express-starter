@@ -9,10 +9,10 @@ import { apiResponse } from "./core/middlewares";
 const app = express();
 const port = process.env.PORT ?? 8000;
 
+app.use(cors(appMeta.cors));
 app.all("/api/auth/*splat", toNodeHandler(auth));
 
 app.use(express.json());
-app.use(cors(appMeta.cors));
 app.use(apiResponse);
 
 app.get("/api", (_, res) => res.api({ message: `Hello, ${appMeta.name}` }));

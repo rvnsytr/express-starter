@@ -1,3 +1,5 @@
+// * NOTE: Sync this file with frontend `@/src/core/permission.ts`
+
 // Any role that isn't in the adminRoles list, even if they have the permission, will not be considered an admin.
 // https://www.better-auth.com/docs/plugins/admin#admin-roles
 

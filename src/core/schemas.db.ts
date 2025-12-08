@@ -1,9 +1,9 @@
+import { Session } from "@/modules/auth";
 import { Account, Verification } from "better-auth";
-import { SessionWithImpersonatedBy, UserWithRole } from "better-auth/plugins";
 
 export type Database = {
-  user: UserWithRole;
+  user: Session["user"];
   account: Account;
-  session: SessionWithImpersonatedBy;
+  session: Session["session"];
   verification: Verification;
 };

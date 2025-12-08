@@ -1,6 +1,6 @@
-import { adminRoles, defaultRole } from "@/modules/auth";
+import { defaultRole } from "@/modules/auth";
 import { betterAuth } from "better-auth";
-import { admin } from "better-auth/plugins";
+import { admin, openAPI } from "better-auth/plugins";
 import { appMeta } from "./constants";
 import { dialect } from "./db";
 import { roles } from "./permission";
@@ -11,10 +11,13 @@ export const auth = betterAuth({
   database: { dialect, type: "mssql", casing: "snake" },
   experimental: { joins: true },
 
+  trustedOrigins: [appMeta.cors.origin],
+
   plugins: [
+    openAPI(),
     admin({
       roles,
-      adminRoles,
+      defaultRole,
       schema: {
         user: {
           fields: {
