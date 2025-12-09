@@ -9,6 +9,7 @@ import { apiResponse } from "./core/middlewares";
 const app = express();
 const port = process.env.PORT ?? 8000;
 
+// app.use(delayMiddleware); // Testing Purpose
 app.use(cors(appMeta.cors));
 app.all("/api/auth/*splat", toNodeHandler(auth));
 

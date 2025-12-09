@@ -17,3 +17,12 @@ export function apiResponse(_: Request, res: Response, next: NextFunction) {
 
   next();
 }
+
+export async function delayMiddleware(
+  _: Request,
+  __: Response,
+  next: NextFunction,
+) {
+  await new Promise((resolve) => setTimeout(resolve, 3 * 1000));
+  next();
+}
