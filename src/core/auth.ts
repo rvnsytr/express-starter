@@ -2,13 +2,13 @@ import { defaultRole } from "@/modules/auth";
 import { betterAuth } from "better-auth";
 import { admin, openAPI } from "better-auth/plugins";
 import { appMeta } from "./constants";
-import { dialect } from "./db";
+import { createDialect } from "./db";
 import { roles } from "./permission";
 
 export const auth = betterAuth({
   appName: appMeta.name,
 
-  database: { dialect, type: "mssql", casing: "snake" },
+  database: { dialect: createDialect(), type: "mssql", casing: "snake" },
   experimental: { joins: true },
 
   trustedOrigins: [appMeta.cors.origin],
