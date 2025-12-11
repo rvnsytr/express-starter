@@ -1,3 +1,4 @@
+import { ZodError } from "zod";
 import { Language, languageMeta } from "../constants";
 
 export function capitalize(string: string, mode: "word" | "first" = "word") {
@@ -63,4 +64,8 @@ export function formatPhone(number: string | number, prefix?: "+62" | "0") {
   }
 
   return `${prefix ?? ""} ${formatted}`.trim();
+}
+
+export function formatZodError<T>(zodError: ZodError<T>) {
+  return new Error(JSON.parse(zodError.message)[0].message);
 }

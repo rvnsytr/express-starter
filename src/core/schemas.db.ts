@@ -1,9 +1,19 @@
-import { Session } from "@/modules/auth";
+// Docs: https://www.kysely.dev/docs/getting-started
+
+import { AuthSession } from "@/modules/auth";
 import { Account, Verification } from "better-auth";
+import { ColumnType, Selectable } from "kysely";
+import z from "zod";
+import { storageTableSchema } from "./schemas.zod";
 
 export type Database = {
-  user: Session["user"];
+  user: AuthSession["user"];
   account: Account;
-  session: Session["session"];
+  session: AuthSession["session"];
   verification: Verification;
+  storage: Omit<z.infer<typeof storageTableSchema>, "created_at"> & {
+    created_at: ColumnType<Date, never, never>;
+  };
 };
+
+export type StorageTable = Selectable<Database["storage"]>;

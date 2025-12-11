@@ -1,0 +1,25 @@
+meta {
+  name: /api/storage
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{host}}/api/storage
+  body: multipartForm
+  auth: none
+}
+
+headers {
+  Origin: {{origin}}
+}
+
+body:multipart-form {
+  ~image: @file(/home/ravensky/Pictures/WhatsApp Image 2025-11-28 at 8.54.36 AM.jpeg)
+  ~something: Something
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

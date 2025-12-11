@@ -4,17 +4,23 @@ meta {
   seq: 3
 }
 
-get {
-  url: {{host}}/api/auth/get-session
+post {
+  url: {{host}}/api/auth/sign-in/email
   body: json
   auth: none
+}
+
+headers {
+  Origin: {{origin}}
 }
 
 body:json {
   {
     "email": "example@example.ex",
-    "password": "Example#123"
-  }
+    "password": "Example#123",
+    "name": "RvnSytR",
+    "role": "admin"
+  }  
 }
 
 settings {
