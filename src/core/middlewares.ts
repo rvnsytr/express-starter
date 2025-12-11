@@ -52,12 +52,7 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
   return res.api({ code: 500, message, error });
 };
 
-export function authorize(
-  access?:
-    | Role[]
-    | { permission: Permissions; permissions?: never }
-    | { permission?: never; permissions: Permissions },
-) {
+export function authorize(permissions: Role[] | Permissions) {
   const handler: RequestHandler = async (req, res, next) => {
     const headers = fromNodeHeaders(req.headers);
     const session = await auth.api.getSession({ headers });
@@ -68,23 +63,23 @@ export function authorize(
     }
 
     req.session = session;
-    if (!access) return next();
+    if (!permissions) return next();
 
     const unauthorized = {
       code: 403,
       message: "Permintaan tidak diperbolehkan!",
     };
 
-    if (Array.isArray(access))
-      return access.includes(session.user.role as Role)
+    if (Array.isArray(permissions))
+      return permissions.includes(session.user.role as Role)
         ? next()
         : res.api(unauthorized);
 
     const isAuthorized = await auth.api.userHasPermission({
-      body: { role: session.user.role as Role, ...access },
+      body: { role: session.user.role as Role, permissions },
     });
 
-    return isAuthorized ? next() : res.api(unauthorized);
+    return isAuthorized.success ? next() : res.api(unauthorized);
   };
 
   return handler;
