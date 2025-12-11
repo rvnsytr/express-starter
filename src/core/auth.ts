@@ -1,9 +1,10 @@
-import { defaultRole } from "@/modules/auth";
 import { betterAuth } from "better-auth";
 import { admin, openAPI } from "better-auth/plugins";
 import { appMeta } from "./constants";
 import { createDialect } from "./db";
-import { roles } from "./permission";
+import { ac, roles } from "./permission";
+
+const defaultRole = "user";
 
 export const auth = betterAuth({
   appName: appMeta.name,
@@ -16,6 +17,7 @@ export const auth = betterAuth({
   plugins: [
     openAPI(),
     admin({
+      ac,
       roles,
       defaultRole,
       schema: {

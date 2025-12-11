@@ -1,21 +1,24 @@
 // * NOTE: Sync this file with frontend `@/src/core/permission.ts`
-
-// Any role that isn't in the adminRoles list, even if they have the permission, will not be considered an admin.
 // https://www.better-auth.com/docs/plugins/admin#admin-roles
 
 import { createAccessControl } from "better-auth/plugins/access";
 import { adminAc, defaultStatements } from "better-auth/plugins/admin/access";
 
+export type ACStatements = typeof ac.statements;
+export type Permissions = {
+  [K in keyof ACStatements]?: ACStatements[K][number][];
+};
+
 export const ac = createAccessControl({
   ...defaultStatements,
-  project: ["create", "update", "delete"],
-} as const);
+  storage: ["create", "update", "delete"],
+});
 
 export const roles = {
-  user: ac.newRole({ project: ["create"] }),
+  user: ac.newRole({ storage: ["create"] }),
 
   admin: ac.newRole({
     ...adminAc.statements,
-    project: ["create", "update", "delete"],
+    storage: ["create", "delete"],
   }),
 };

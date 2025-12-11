@@ -6,21 +6,29 @@ import { toMegabytes } from "./utils";
 z.config(id());
 
 export const sharedSchemas = {
-  string: (field: string, options?: { min?: number; max?: number }) => {
-    const { invalid, required, stringTooShort, stringTooLong } = messages;
+  string: (
+    field: string,
+    options?: { min?: number; max?: number; sanitize?: boolean },
+  ) => {
+    const { invalid, required } = messages;
+    const { tooShort, tooLong } = messages.string;
 
     const min = options?.min;
     const max = options?.max;
+    const sanitize = options?.sanitize ?? true;
 
     let schema = z.string({ error: invalid(field) }).trim();
 
+    if (sanitize)
+      schema = schema.regex(/[A-Za-z0-9]/, { message: required(field) });
+
     if (min) {
-      const message = min <= 1 ? required : stringTooShort;
+      const message = min <= 1 ? required : tooShort;
       schema = schema.min(min, { error: message(field, min) });
     }
 
     if (max) {
-      const message = stringTooLong(field, max);
+      const message = tooLong(field, max);
       schema = schema.max(max, { error: message });
     }
 
@@ -28,7 +36,8 @@ export const sharedSchemas = {
   },
 
   number: (field: string, options?: { min?: number; max?: number }) => {
-    const { invalid, required, numberTooSmall, numberTooLarge } = messages;
+    const { invalid, required } = messages;
+    const { tooSmall, tooLarge } = messages.number;
 
     const min = options?.min;
     const max = options?.max;
@@ -36,19 +45,19 @@ export const sharedSchemas = {
     let schema = z.coerce.number({ error: invalid(field) });
 
     if (min) {
-      const message = min <= 1 ? required : numberTooSmall;
+      const message = min <= 1 ? required : tooSmall;
       schema = schema.min(min, { error: message(field, min) });
     }
 
     if (max) {
-      const message = numberTooLarge(field, max);
+      const message = tooLarge(field, max);
       schema = schema.max(max, { error: message });
     }
 
     return schema;
   },
 
-  file: (
+  files: (
     type: FileType,
     options?: {
       min?: number;
@@ -56,32 +65,38 @@ export const sharedSchemas = {
       maxFileSize?: number;
     },
   ) => {
-    const { fileToFew, fileTooMany, fileTooLarge } = messages;
-
+    const { mimeInvalid, tooFew, tooMany, tooLarge } = messages.files;
     const { displayName, size, mimeTypes } = fileMeta[type];
 
     const min = options?.min;
     const max = options?.max;
-
     const maxFileSize = options?.maxFileSize ?? size.bytes;
     const maxFileSizeInMB = toMegabytes(maxFileSize).toFixed(2);
 
     let schema = z
-      .file()
-      .mime(mimeTypes, { error: `Tipe ${displayName} tidak valid.` })
-      .min(1)
-      .max(maxFileSize, {
-        error: fileTooLarge(displayName, maxFileSizeInMB),
+      .object({
+        fieldname: z.string(),
+        originalname: z.string(),
+        encoding: z.string(),
+        buffer: z.instanceof(Buffer),
+        mimetype: z.string().refine((v) => mimeTypes.includes(v), {
+          error: mimeInvalid(displayName),
+        }),
+        size: z
+          .number()
+          .min(1)
+          .max(maxFileSize, { error: tooLarge(displayName, maxFileSizeInMB) }),
+        path: z.string().optional(),
       })
       .array();
 
     if (min) {
-      const message = fileToFew(displayName, min);
+      const message = tooFew(displayName, min);
       schema = schema.min(min, { error: message });
     }
 
     if (max && max > 0) {
-      const message = fileTooMany(displayName, max);
+      const message = tooMany(displayName, max);
       schema = schema.max(max, { error: message });
     }
 
@@ -92,22 +107,22 @@ export const sharedSchemas = {
     field: string,
     options?: { min?: Date | "now"; max?: Date | "now" },
   ) => {
-    const { invalid, dateToEarly, dateTooLate } = messages;
+    const { tooEarly, tooLate } = messages.date;
 
     const min = options?.min;
     const max = options?.max;
 
-    let schema = z.coerce.date({ error: invalid(field) });
+    let schema = z.coerce.date({ error: messages.invalid(field) });
 
     if (min) {
       const value = min === "now" ? new Date() : min;
-      const message = dateToEarly(field, value);
+      const message = tooEarly(field, value);
       schema = schema.min(value, { error: message });
     }
 
     if (max) {
       const value = max === "now" ? new Date() : max;
-      const message = dateTooLate(field, value);
+      const message = tooLate(field, value);
       schema = schema.max(value, { error: message });
     }
 
@@ -123,14 +138,8 @@ export const sharedSchemas = {
       maxDate?: Date | "now";
     },
   ) => {
-    const {
-      invalid,
-      required,
-      dateToEarly,
-      dateTooLate,
-      dateToFew,
-      dateTooMany,
-    } = messages;
+    const { invalid, required } = messages;
+    const { tooEarly, tooLate, tooFew, tooMany } = messages.date;
 
     const min = options?.min;
     const max = options?.max;
@@ -141,13 +150,13 @@ export const sharedSchemas = {
 
     if (minDate) {
       const value = minDate === "now" ? new Date() : minDate;
-      const message = dateToEarly(field, value);
+      const message = tooEarly(field, value);
       dateSchema = dateSchema.min(value, { error: message });
     }
 
     if (maxDate) {
       const value = maxDate === "now" ? new Date() : maxDate;
-      const message = dateTooLate(field, value);
+      const message = tooLate(field, value);
       dateSchema = dateSchema.max(value, { error: message });
     }
 
@@ -156,12 +165,12 @@ export const sharedSchemas = {
     });
 
     if (min) {
-      const message = min <= 1 ? required : dateToFew;
+      const message = min <= 1 ? required : tooFew;
       schema = schema.min(min, { error: message(field, min) });
     }
 
     if (max) {
-      const message = dateTooMany(field, max);
+      const message = tooMany(field, max);
       schema = schema.max(max, { error: message });
     }
 
@@ -181,43 +190,59 @@ export const sharedSchemas = {
     .trim()
     .toLowerCase()
     .min(1, { error: messages.required("Alamat email") })
-    .max(255, { error: messages.stringTooLong("Alamat email", 255) }),
+    .max(255, { error: messages.string.tooLong("Alamat email", 255) }),
 
   password: z
     .string()
     .min(1, { error: messages.required("Kata sandi") })
-    .min(8, { error: messages.stringTooShort("Kata sandi", 8) })
-    .max(255, { error: messages.stringTooLong("Kata sandi", 255) })
-    .regex(/[A-Z]/, {
-      error: `Kata sandi harus mengandung huruf kapital. (A-Z)`,
-    })
-    .regex(/[a-z]/, {
-      error: `Kata sandi harus mengandung huruf kecil. (a-z)`,
-    })
-    .regex(/[0-9]/, {
-      error: `Kata sandi harus mengandung angka. (0-9)`,
-    })
-    .regex(/[^A-Za-z0-9]/, {
-      error: `Kata sandi harus mengandung karakter khusus.`,
-    }),
+    .min(8, { error: messages.string.tooShort("Kata sandi", 8) })
+    .max(255, { error: messages.string.tooLong("Kata sandi", 255) })
+    .regex(/[a-z]/, { error: messages.password.lowercase })
+    .regex(/[A-Z]/, { error: messages.password.uppercase })
+    .regex(/[0-9]/, { error: messages.password.number })
+    .regex(/[^A-Za-z0-9]/, { error: messages.password.character }),
 
   gender: z.enum(allGenders),
 
+  deletedAt: z.coerce
+    .date({ error: "Field 'deletedAt' tidak valid." })
+    .nullable()
+    .default(null),
+  deletedBy: z
+    .string({ error: "Field 'deletedBy' tidak valid." })
+    .nullable()
+    .default(null),
   updatedAt: z.coerce
-    .date({ error: "Field 'updated_at' tidak valid." })
+    .date({ error: "Field 'updatedAt' tidak valid." })
     .nullable()
     .default(null),
   updatedBy: z
-    .string({ error: "Field 'updated_by' tidak valid." })
+    .string({ error: "Field 'updatedBy' tidak valid." })
     .nullable()
     .default(null),
-
-  createdAt: z.coerce.date({ error: "Field 'created_at' tidak valid." }),
-  createdBy: z.string({ error: "Field 'created_by' tidak valid." }).nullable(),
+  createdAt: z.coerce.date({ error: "Field 'createdAt' tidak valid." }),
+  createdBy: z.string({ error: "Field 'createdBy' tidak valid." }),
 };
 
 export const apiResponseSchema = z.object({
   code: z.number(),
   success: z.boolean(),
   message: z.string(),
+});
+
+export const storageTableSchema = z.object({
+  id: z.uuidv4(),
+
+  file_name: sharedSchemas.string("Nama file", { min: 1, max: 255 }),
+  category: z.enum(["image"]),
+  file_path: sharedSchemas.string("File path", { min: 1, max: 500 }),
+  mime_type: sharedSchemas.string("Tipe file", { max: 100 }),
+  file_size: sharedSchemas.number("Ukuran file"),
+
+  deleted_at: sharedSchemas.deletedAt,
+  deleted_by: sharedSchemas.deletedBy,
+  updated_at: sharedSchemas.updatedAt,
+  updated_by: sharedSchemas.updatedBy,
+  created_at: sharedSchemas.createdAt,
+  created_by: sharedSchemas.createdBy,
 });
