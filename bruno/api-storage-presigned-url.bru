@@ -1,0 +1,20 @@
+meta {
+  name: /api/storage/presigned-url
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{host}}/api/storage/presigned-url
+  body: json
+  auth: inherit
+}
+
+body:json {
+  ["tmp/image/WhatsApp Image 2025-11-28 at 8.54.36 AM.jpeg"]
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

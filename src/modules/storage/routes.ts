@@ -3,7 +3,7 @@ import { formatZodError } from "@/core/utils";
 import { Router } from "express";
 import multer from "multer";
 import z from "zod";
-import { getFiles, removeFiles, uploadFiles } from "./actions";
+import { getFiles, getPresignedUrl, removeFiles, uploadFiles } from "./actions";
 
 const router = Router();
 
@@ -11,6 +11,27 @@ router.get("/", authorize({ storage: ["read"] }), async (req, res) => {
   const { data } = await getFiles(req);
   return res.api({ data });
 });
+
+router.get(
+  "/presigned-url",
+  authorize({ storage: ["read"] }),
+  async (req, res) => {
+    try {
+      const parsed = z
+        .string()
+        .array()
+        .safeParse(req.body ?? []);
+      if (!parsed.success) throw new Error(formatZodError(parsed.error));
+
+      const paths = parsed.data;
+      const data = await Promise.all(paths.map((p) => getPresignedUrl(p)));
+
+      return res.api({ data });
+    } catch (e) {
+      return res.api({ code: 400, message: (e as Error).message });
+    }
+  },
+);
 
 router.post(
   "/",
