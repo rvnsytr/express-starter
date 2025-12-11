@@ -67,5 +67,5 @@ export function formatPhone(number: string | number, prefix?: "+62" | "0") {
 }
 
 export function formatZodError<T>(zodError: ZodError<T>) {
-  return new Error(JSON.parse(zodError.message)[0].message);
+  return JSON.parse(zodError.message)[0].message;
 }

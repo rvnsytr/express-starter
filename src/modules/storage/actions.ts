@@ -22,6 +22,7 @@ const s3 = new Client({
 export type UploadFilesOptions = {
   type?: FileType;
   userId?: string;
+  db?: Kysely<Database>;
   min?: number;
   max?: number;
   maxFileSize?: number;
@@ -34,23 +35,30 @@ export type UploadFilesOptions = {
   disabled?: boolean;
 };
 
+export type RemoveFilesOptions = {
+  by?: "id" | "file_path";
+  db?: Kysely<Database>;
+};
+
 export async function uploadFiles(req: Request, options?: UploadFilesOptions) {
   try {
     const type = options?.type ?? "file";
 
     const parsed = sharedSchemas.files(type, options).safeParse(req.files);
-    if (!parsed.success) throw formatZodError(parsed.error);
+    if (!parsed.success) throw new Error(formatZodError(parsed.error));
 
     const queryParsed = z
       .object({ url: z.coerce.boolean().optional().default(false) })
       .safeParse(req.query);
-    if (!queryParsed.success) throw formatZodError(queryParsed.error);
+    if (!queryParsed.success)
+      throw new Error(formatZodError(queryParsed.error));
 
     const userSchema = sharedSchemas
       .string("Used ID", { min: 1 })
       .safeParse(options?.userId ?? req.session?.user.id);
-    if (!userSchema.success) throw formatZodError(userSchema.error);
+    if (!userSchema.success) throw new Error(formatZodError(userSchema.error));
 
+    const database = options?.db ?? db;
     const withUrl = queryParsed.data.url;
     const createdBy = userSchema.data;
     const fileTypeSchema = storageTableSchema.pick({ category: true });
@@ -86,7 +94,7 @@ export async function uploadFiles(req: Request, options?: UploadFilesOptions) {
         let fileUrl = undefined;
 
         if (!(options?.disabled ?? false)) {
-          await db
+          await database
             .insertInto("storage")
             .values({
               id,
@@ -136,7 +144,7 @@ export async function getFiles(req: Request) {
         category: storageTableSchema.shape.category.optional(),
       })
       .safeParse(req.query);
-    if (!parsed.success) throw formatZodError(parsed.error);
+    if (!parsed.success) throw new Error(formatZodError(parsed.error));
 
     const { url: withUrl, category } = parsed.data;
 
@@ -178,13 +186,13 @@ export async function getPresignedUrl(
 export async function removeFiles(
   keys: string[],
   userId: string,
-  options?: { by?: "id" | "file_path"; db?: Kysely<Database> },
+  options?: RemoveFilesOptions,
 ) {
   try {
     const userSchema = sharedSchemas
       .string("Used ID", { min: 1 })
       .safeParse(userId);
-    if (!userSchema.success) throw formatZodError(userSchema.error);
+    if (!userSchema.success) throw new Error(formatZodError(userSchema.error));
 
     const deletedBy = userSchema.data;
     const searchBy = options?.by ?? "id";

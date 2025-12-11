@@ -4,8 +4,8 @@ meta {
   seq: 3
 }
 
-post {
-  url: {{host}}/api/auth/sign-in/email
+get {
+  url: {{host}}/api/auth/get-session
   body: json
   auth: none
 }
@@ -20,7 +20,7 @@ body:json {
     "password": "Example#123",
     "name": "RvnSytR",
     "role": "admin"
-  }  
+  }
 }
 
 settings {
