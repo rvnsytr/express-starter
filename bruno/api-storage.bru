@@ -10,12 +10,16 @@ get {
   auth: none
 }
 
+params:query {
+  ~url: true
+}
+
 headers {
   Origin: {{origin}}
 }
 
 body:multipart-form {
-  ~image: @file(/home/ravensky/Pictures/WhatsApp Image 2025-11-28 at 8.54.36 AM.jpeg)
+  ~image: @file(/home/ravensky/Projects/purnaku-app/public/cover.png)
   ~something: Something
 }
 

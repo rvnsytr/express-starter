@@ -136,41 +136,6 @@ export async function uploadFiles(req: Request, options?: UploadFilesOptions) {
   }
 }
 
-export async function getFiles(req: Request) {
-  try {
-    const parsed = z
-      .object({
-        url: z.coerce.boolean().optional().default(false),
-        category: storageTableSchema.shape.category.optional(),
-      })
-      .safeParse(req.query);
-    if (!parsed.success) throw new Error(formatZodError(parsed.error));
-
-    const { url: withUrl, category } = parsed.data;
-
-    let query = db.selectFrom("storage").selectAll();
-    if (category) query = query.where("category", "=", category);
-
-    let data = await query.orderBy("created_at", (ob) => ob.desc()).execute();
-
-    if (withUrl) {
-      data = await Promise.all(
-        data.map(async (f) => {
-          const fileName = f.file_name;
-          const file_url = await getPresignedUrl(f.file_path, { fileName });
-          return { ...f, file_url };
-        }),
-      );
-    }
-
-    return { data, error: null };
-  } catch (e) {
-    const error =
-      e instanceof Error ? e.message : "Terjadi kesalahan saat mengambil file.";
-    return { data: null, error };
-  }
-}
-
 export async function getPresignedUrl(
   filePath: string,
   options?: { fileName?: string; duration?: number },

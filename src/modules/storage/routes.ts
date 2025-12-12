@@ -1,15 +1,42 @@
+import { db } from "@/core/db";
 import { authorize } from "@/core/middlewares";
-import { formatZodError } from "@/core/utils";
+import { storageTableSchema } from "@/core/schemas.zod";
+import { formatZodError, keysToCamel } from "@/core/utils";
 import { Router } from "express";
 import multer from "multer";
 import z from "zod";
-import { getFiles, getPresignedUrl, removeFiles, uploadFiles } from "./actions";
+import { getPresignedUrl, removeFiles, uploadFiles } from "./actions";
 
 const router = Router();
 
 router.get("/", authorize({ storage: ["read"] }), async (req, res) => {
-  const { data } = await getFiles(req);
-  return res.api({ data });
+  const parsed = z
+    .object({
+      url: z.coerce.boolean().optional().default(false),
+      category: storageTableSchema.shape.category.optional(),
+    })
+    .safeParse(req.query);
+  if (!parsed.success)
+    return res.api({ code: 400, message: formatZodError(parsed.error) });
+
+  const { url: withUrl, category } = parsed.data;
+
+  let query = db.selectFrom("storage").selectAll();
+  if (category) query = query.where("category", "=", category);
+
+  let result = await query.orderBy("created_at", (ob) => ob.desc()).execute();
+
+  if (withUrl) {
+    result = await Promise.all(
+      result.map(async (f) => {
+        const fileName = f.file_name;
+        const fileUrl = await getPresignedUrl(f.file_path, { fileName });
+        return { ...f, fileUrl };
+      }),
+    );
+  }
+
+  return res.api({ data: keysToCamel(result) });
 });
 
 router.get(
@@ -17,14 +44,23 @@ router.get(
   authorize({ storage: ["read"] }),
   async (req, res) => {
     try {
-      const parsed = z
-        .string()
-        .array()
-        .safeParse(req.body ?? []);
+      const parsed = z.object({ data: z.string().array() }).safeParse(req.body);
       if (!parsed.success) throw new Error(formatZodError(parsed.error));
 
-      const paths = parsed.data;
-      const data = await Promise.all(paths.map((p) => getPresignedUrl(p)));
+      const { data: keys } = parsed.data;
+
+      const result = await db
+        .selectFrom("storage")
+        .select(["id", "file_path"])
+        .where("id", "in", keys)
+        .execute();
+
+      const data = await Promise.all(
+        result.map(async ({ id, file_path }) => {
+          const fileUrl = await getPresignedUrl(file_path);
+          return { id, fileUrl };
+        }),
+      );
 
       return res.api({ data });
     } catch (e) {

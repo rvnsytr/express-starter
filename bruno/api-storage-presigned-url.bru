@@ -1,7 +1,7 @@
 meta {
   name: /api/storage/presigned-url
   type: http
-  seq: 4
+  seq: 5
 }
 
 get {
@@ -11,7 +11,9 @@ get {
 }
 
 body:json {
-  ["tmp/image/WhatsApp Image 2025-11-28 at 8.54.36 AM.jpeg"]
+  {
+    "data": ["175AEC8C-6E4B-4EAB-8458-A9DFDFE0A37B"]
+  }
 }
 
 settings {

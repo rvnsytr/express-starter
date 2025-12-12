@@ -30,7 +30,7 @@ export function toMegabytes(bytes: number) {
   return bytes / 1024 / 1024;
 }
 
-export function toKebabCase(str: string) {
+export function toKebab(str: string) {
   return str
     .trim()
     .toLowerCase()
@@ -38,8 +38,12 @@ export function toKebabCase(str: string) {
     .replace(/\s+/g, "-");
 }
 
-export function kebabToRegularCase(str: string) {
+export function kebabToRegular(str: string) {
   return str.trim().split("-").join(" ");
+}
+
+export function snakeToCamel(str: string) {
+  return str.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
 }
 
 export function formatNumber(
@@ -68,4 +72,16 @@ export function formatPhone(number: string | number, prefix?: "+62" | "0") {
 
 export function formatZodError<T>(zodError: ZodError<T>) {
   return JSON.parse(zodError.message)[0].message;
+}
+
+export function keysToCamel<T>(input: unknown): T {
+  if (Array.isArray(input)) {
+    return input.map((v) => keysToCamel(v)) as T;
+  } else if (input !== null && typeof input === "object") {
+    return Object.fromEntries(
+      Object.entries(input).map(([k, v]) => [snakeToCamel(k), v]),
+    ) as T;
+  }
+
+  return input as T;
 }
