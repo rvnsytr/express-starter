@@ -31,6 +31,7 @@ export type UploadFilesOptions = {
   suffix?: string;
   fileName?: string;
   fileCategory?: StorageTable["category"];
+  overwriteByQuery?: boolean;
   directory?: string;
   disabled?: boolean;
 };
@@ -48,7 +49,10 @@ export async function uploadFiles(req: Request, options?: UploadFilesOptions) {
     if (!parsed.success) throw new Error(formatZodError(parsed.error));
 
     const queryParsed = z
-      .object({ url: z.coerce.boolean().optional().default(false) })
+      .object({
+        url: z.coerce.boolean().optional().default(false),
+        fileName: z.string().optional(),
+      })
       .safeParse(req.query);
     if (!queryParsed.success)
       throw new Error(formatZodError(queryParsed.error));
@@ -58,18 +62,29 @@ export async function uploadFiles(req: Request, options?: UploadFilesOptions) {
       .safeParse(options?.userId ?? req.session?.user.id);
     if (!userSchema.success) throw new Error(formatZodError(userSchema.error));
 
+    const { url: withUrl, fileName: fileNameInQuery } = queryParsed.data;
+
+    const overwriteByQuery = options?.overwriteByQuery ?? false;
     const database = options?.db ?? db;
-    const withUrl = queryParsed.data.url;
     const createdBy = userSchema.data;
-    const fileTypeSchema = storageTableSchema.pick({ category: true });
+
+    const fileNameOption = overwriteByQuery
+      ? (fileNameInQuery ?? options?.fileName)
+      : options?.fileName;
 
     const data = await Promise.all(
       parsed.data.map(async (file) => {
-        const { fieldname, originalname, mimetype, size, buffer } = file;
+        const {
+          fieldname,
+          originalname,
+          mimetype: mimeType,
+          size,
+          buffer,
+        } = file;
 
-        const categoryParse = fileTypeSchema.safeParse({
-          category: options?.fileCategory ?? fieldname,
-        });
+        const categoryParse = storageTableSchema
+          .pick({ category: true })
+          .safeParse({ category: options?.fileCategory ?? fieldname });
 
         if (!categoryParse.success) {
           const { displayName } = fileMeta[type];
@@ -83,8 +98,8 @@ export async function uploadFiles(req: Request, options?: UploadFilesOptions) {
         const now = options?.unique ? Date.now().toString() : "";
         const prefix = options?.prefix ?? "";
         const suffix = options?.suffix ?? "";
-        const fileName = options?.fileName
-          ? `${options.fileName}${now}${suffix}.${extension}`
+        const fileName = fileNameOption
+          ? `${fileNameOption}${now}${suffix}.${extension}`
           : `${originalname}${now}${suffix}`;
 
         const directory = options?.directory ?? defaultDirectory;
@@ -101,14 +116,14 @@ export async function uploadFiles(req: Request, options?: UploadFilesOptions) {
               file_name: fileName,
               category: category,
               file_path: filePath,
-              mime_type: mimetype,
+              mime_type: mimeType,
               file_size: size,
               created_by: createdBy,
             })
             .executeTakeFirst();
 
           await s3.putObject(bucket, filePath, buffer, size, {
-            "Content-Type": mimetype,
+            "Content-Type": mimeType,
           });
 
           if (withUrl) fileUrl = await getPresignedUrl(filePath, { fileName });
@@ -119,7 +134,7 @@ export async function uploadFiles(req: Request, options?: UploadFilesOptions) {
           fileName,
           category,
           filePath,
-          mimetype,
+          mimeType,
           fileSize: size,
           fileUrl,
         };

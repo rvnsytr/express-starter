@@ -39,7 +39,7 @@ router.get("/", authorize({ storage: ["read"] }), async (req, res) => {
   return res.api({ data: keysToCamel(result) });
 });
 
-router.get(
+router.post(
   "/presigned-url",
   authorize({ storage: ["read"] }),
   async (req, res) => {
@@ -74,15 +74,18 @@ router.post(
   authorize({ storage: ["create"] }),
   multer().any(),
   async (req, res) => {
-    const { data, error } = await uploadFiles(req, { min: 1 });
+    const { data, error } = await uploadFiles(req, {
+      overwriteByQuery: true,
+      min: 1,
+      // disabled: true,
+    });
     if (error) return res.api({ code: 400, message: error });
     return res.api({ data });
   },
 );
 
 router.delete("/:id", authorize({ storage: ["delete"] }), async (req, res) => {
-  const userId = req.session?.user.id;
-  if (!userId) return res.api({ code: 401, message: "Unauthorized" });
+  const userId = req.session!.user.id;
 
   const keys = z.uuidv4().safeParse(req.params.id);
   if (!keys.success) throw new Error(formatZodError(keys.error));
