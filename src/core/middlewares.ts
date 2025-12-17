@@ -1,4 +1,5 @@
-import { Role } from "@/modules/auth";
+import { Role } from "@/core/auth";
+import { APIError } from "better-auth";
 import { fromNodeHeaders } from "better-auth/node";
 import { ErrorRequestHandler, RequestHandler } from "express";
 import z from "zod";
@@ -42,13 +43,16 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
   const nodeEnv = process.env.NODE_ENV ?? "local";
   const isShowError = nodeEnv === "local" || nodeEnv === "development";
 
-  const message = "Terjadi kesalahan pada server.";
-  const errorMessage =
-    err instanceof Error ? err.message : "Unknown error occurred";
-
-  const error = isShowError ? errorMessage : undefined;
-
   console.error(err);
+  const message = "Terjadi kesalahan pada server.";
+
+  if (err instanceof APIError) {
+    const { statusCode, body } = err;
+    const error = isShowError ? body : undefined;
+    return res.api({ code: statusCode, message, error });
+  }
+
+  const error = isShowError ? (err.message ?? undefined) : undefined;
   return res.api({ code: 500, message, error });
 };
 
