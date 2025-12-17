@@ -1,10 +1,13 @@
+import { getPresignedUrl, removeFiles } from "@/modules/storage";
 import { betterAuth } from "better-auth";
-import { admin, openAPI } from "better-auth/plugins";
+import { admin, createAuthMiddleware, openAPI } from "better-auth/plugins";
 import { appMeta } from "./constants";
-import { createDialect } from "./db";
+import { createDialect, db } from "./db";
 import { ac, roles } from "./permission";
 
-const defaultRole = "user";
+export type AuthSession = typeof auth.$Infer.Session;
+export type Role = keyof typeof roles;
+const defaultRole: Role = "user";
 
 export const auth = betterAuth({
   appName: appMeta.name,
@@ -31,12 +34,31 @@ export const auth = betterAuth({
     }),
   ],
 
-  emailAndPassword: { enabled: true, autoSignIn: false },
-  socialProviders: {
-    github: {
-      clientId: process.env.GITHUB_CLIENT_ID!,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
-    },
+  emailAndPassword: {
+    enabled: true,
+    autoSignIn: false,
+    // sendResetPassword: async ({ user, url, token }) => {
+    //   novu.trigger({
+    //     to: {
+    //       subscriberId: "subscriber_unique_identifier",
+    //       firstName: "Albert",
+    //       lastName: "Einstein",
+    //       email: "albert@einstein.com",
+    //       phone: "+1234567890",
+    //     },
+    //     workflowId: "workflow_identifier",
+    //     payload: {
+    //       comment_id: "string",
+    //       post: {
+    //         text: "string",
+    //       },
+    //     },
+    //   });
+    // },
+  },
+  emailVerification: {
+    sendOnSignUp: true,
+    // sendVerificationEmail: async ({ user, url, token }) => {},
   },
 
   user: {
@@ -71,7 +93,7 @@ export const auth = betterAuth({
       ipAddress: "ip_address",
       userAgent: "user_agent",
       userId: "user_id",
-      impersonatedBy: "impersonated_by",
+      // impersonatedBy: "impersonated_by",
     },
   },
   verification: {
@@ -80,5 +102,37 @@ export const auth = betterAuth({
       createdAt: "created_at",
       updatedAt: "updated_at",
     },
+  },
+
+  hooks: {
+    after: createAuthMiddleware(async (ctx) => {
+      const { session, newSession } = ctx.context;
+
+      if (ctx.path === "/get-session") {
+        if (!session) return ctx.json(session);
+
+        const { session: sessionData, user: userData } = session;
+        if (!userData.image) return ctx.json(session);
+
+        const file = await db
+          .selectFrom("storage")
+          .select("file_path")
+          .where("id", "=", userData.image)
+          .executeTakeFirst();
+
+        if (!file) return ctx.json(session);
+        const image = await getPresignedUrl(file.file_path);
+
+        return ctx.json({ session: sessionData, user: { ...userData, image } });
+      }
+
+      if (ctx.path === "/update-user") {
+        const oldImageId = session?.user.image;
+        const newImageId = newSession?.user.image;
+
+        if (oldImageId && oldImageId !== newImageId)
+          removeFiles([oldImageId], session?.user.id);
+      }
+    }),
   },
 });

@@ -56,8 +56,8 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
   return res.api({ code: 500, message, error });
 };
 
-export function authorize(permissions: Permissions) {
-  const handler: RequestHandler = async (req, res, next) => {
+export function authorize(permissions: Permissions): RequestHandler {
+  return async (req, res, next) => {
     const headers = fromNodeHeaders(req.headers);
     const session = await auth.api.getSession({ headers });
 
@@ -77,6 +77,4 @@ export function authorize(permissions: Permissions) {
       ? next()
       : res.api({ code: 403, message: "Permintaan tidak diperbolehkan!" });
   };
-
-  return handler;
 }

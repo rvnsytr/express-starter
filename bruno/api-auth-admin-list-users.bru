@@ -1,0 +1,20 @@
+meta {
+  name: /api/auth/admin/list-users
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{host}}/api/auth/admin/list-users
+  body: none
+  auth: none
+}
+
+headers {
+  Origin: {{origin}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

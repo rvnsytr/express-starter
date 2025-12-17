@@ -1,0 +1,27 @@
+meta {
+  name: /api/auth/update-user
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{host}}/api/auth/update-user
+  body: json
+  auth: none
+}
+
+headers {
+  Origin: {{origin}}
+}
+
+body:json {
+  {
+    "name": "RvnS",
+    "image": null
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

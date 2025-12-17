@@ -1,6 +1,6 @@
 // Docs: https://www.kysely.dev/docs/getting-started
 
-import { AuthSession } from "@/modules/auth";
+import { AuthSession } from "@/core/auth";
 import { Account, Verification } from "better-auth";
 import { ColumnType, Selectable } from "kysely";
 import z from "zod";

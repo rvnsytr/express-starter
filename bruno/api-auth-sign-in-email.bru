@@ -1,11 +1,11 @@
 meta {
-  name: /api/auth
+  name: /api/auth/sign-in/email
   type: http
-  seq: 3
+  seq: 4
 }
 
-get {
-  url: {{host}}/api/auth/get-session
+post {
+  url: {{host}}/api/auth/sign-in/email
   body: json
   auth: none
 }
@@ -21,6 +21,7 @@ body:json {
     "name": "RvnSytR",
     "role": "admin"
   }
+  
 }
 
 settings {

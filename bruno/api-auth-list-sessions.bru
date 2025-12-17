@@ -1,0 +1,20 @@
+meta {
+  name: /api/auth/list-sessions
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{host}}/api/auth/list-sessions
+  body: none
+  auth: none
+}
+
+headers {
+  Origin: {{origin}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

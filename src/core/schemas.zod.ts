@@ -1,6 +1,9 @@
+import { Role } from "@/core/auth";
+import { userSchema as authUserSchema } from "better-auth";
 import z from "zod";
 import { id } from "zod/locales";
 import { allGenders, fileMeta, FileType, messages } from "./constants";
+import { roles } from "./permission";
 import { toMegabytes } from "./utils";
 
 z.config(id());
@@ -228,6 +231,13 @@ export const apiResponseSchema = z.object({
   code: z.number(),
   success: z.boolean(),
   message: z.string(),
+});
+
+export const userSchema = authUserSchema.extend({
+  email: sharedSchemas.email,
+  name: sharedSchemas.string("Nama", { min: 1 }),
+  image: z.string().optional().nullable(),
+  role: z.enum(Object.keys(roles) as Role[]),
 });
 
 export const storageTableSchema = z.object({

@@ -1,4 +1,4 @@
-import { AuthSession } from "@/modules/auth";
+import { AuthSession } from "@/core/auth";
 import "express-serve-static-core";
 import { ApiResponse } from "./src/core/middlewares";
 

@@ -11,16 +11,16 @@ export type Permissions = {
 
 export const ac = createAccessControl({
   ...defaultStatements,
-  storage: ["create", "read", "update", "delete"],
+  storage: ["create", "list", "update", "delete"],
 });
 
 export const roles = {
   user: ac.newRole({
-    storage: ["create", "read"],
+    storage: ["create", "list"],
   }),
 
   admin: ac.newRole({
     ...adminAc.statements,
-    storage: ["create", "read", "update", "delete"],
+    storage: ["create", "list", "update", "delete"],
   }),
 };

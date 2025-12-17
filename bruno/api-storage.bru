@@ -1,16 +1,17 @@
 meta {
   name: /api/storage
   type: http
-  seq: 4
+  seq: 9
 }
 
-get {
-  url: {{host}}/api/storage
+post {
+  url: {{host}}/api/storage?fileName=something
   body: multipartForm
   auth: none
 }
 
 params:query {
+  fileName: something
   ~url: true
 }
 
@@ -19,7 +20,7 @@ headers {
 }
 
 body:multipart-form {
-  ~image: @file(/home/ravensky/Projects/purnaku-app/public/cover.png)
+  image: @file(/home/ravensky/Projects/purnaku-app/public/cover.png)
   ~something: Something
 }
 

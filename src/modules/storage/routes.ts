@@ -9,7 +9,7 @@ import { getPresignedUrl, removeFiles, uploadFiles } from "./actions";
 
 const router = Router();
 
-router.get("/", authorize({ storage: ["read"] }), async (req, res) => {
+router.get("/", authorize({ storage: ["list"] }), async (req, res) => {
   const parsed = z
     .object({
       url: z.coerce.boolean().optional().default(false),
@@ -41,7 +41,7 @@ router.get("/", authorize({ storage: ["read"] }), async (req, res) => {
 
 router.post(
   "/presigned-url",
-  authorize({ storage: ["read"] }),
+  authorize({ storage: ["list"] }),
   async (req, res) => {
     try {
       const parsed = z.object({ data: z.string().array() }).safeParse(req.body);

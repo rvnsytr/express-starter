@@ -1,0 +1,20 @@
+meta {
+  name: /api/auth/get-session
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{host}}/api/auth/get-session
+  body: json
+  auth: none
+}
+
+headers {
+  Origin: {{origin}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
