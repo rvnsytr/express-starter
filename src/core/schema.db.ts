@@ -4,7 +4,7 @@ import { AuthSession } from "@/core/auth";
 import { Account, Verification } from "better-auth";
 import { ColumnType, Selectable } from "kysely";
 import z from "zod";
-import { storageTableSchema } from "./schemas.zod";
+import { storageTableSchema } from "./schema.zod";
 
 export type Database = {
   user: AuthSession["user"];

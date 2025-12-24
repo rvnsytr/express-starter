@@ -5,7 +5,7 @@ import { ErrorRequestHandler, RequestHandler } from "express";
 import z from "zod";
 import { auth } from "./auth";
 import { Permissions } from "./permission";
-import { apiResponseSchema } from "./schemas.zod";
+import { apiResponseSchema } from "./schema.zod";
 import { delay } from "./utils";
 
 export type ApiResponse<T> = z.infer<typeof apiResponseSchema> & {

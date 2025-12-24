@@ -1,7 +1,7 @@
 import { Kysely, MssqlDialect } from "kysely";
 import * as tarn from "tarn";
 import * as tedious from "tedious";
-import { Database } from "./schemas.db";
+import { Database } from "./schema.db";
 
 export type DBConfig = {
   host?: string;

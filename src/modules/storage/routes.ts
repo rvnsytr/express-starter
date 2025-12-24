@@ -1,6 +1,6 @@
 import { db } from "@/core/db";
 import { authorize } from "@/core/middlewares";
-import { storageTableSchema } from "@/core/schemas.zod";
+import { storageTableSchema } from "@/core/schema.zod";
 import { formatZodError, keysToCamel } from "@/core/utils";
 import { Router } from "express";
 import multer from "multer";

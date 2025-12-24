@@ -1,7 +1,7 @@
 import { fileMeta, FileType } from "@/core/constants";
 import { db } from "@/core/db";
-import { Database, StorageTable } from "@/core/schemas.db";
-import { sharedSchemas, storageTableSchema } from "@/core/schemas.zod";
+import { Database, StorageTable } from "@/core/schema.db";
+import { sharedSchemas, storageTableSchema } from "@/core/schema.zod";
 import { formatZodError } from "@/core/utils";
 import { Request } from "express";
 import { Kysely } from "kysely";
