@@ -10,17 +10,17 @@ import { delay } from "./utils";
 
 export type ApiResponse<T> = z.infer<typeof apiResponseSchema> & {
   data: T;
-  [k: string]: unknown;
+  error?: unknown;
 };
 
 export const init: RequestHandler = (_req, res, next) => {
   res.api = <T>(payload: Partial<ApiResponse<T>>) => {
-    const { code: pyCode, message: pyMessage, data: pyData, ...rest } = payload;
+    const { code: pyCode, message: pyMessage, data: pyData, error } = payload;
     const code = pyCode ?? 200;
     const success = code >= 200 && code < 300;
     const data = pyData ?? null;
     const message = pyMessage ?? (success ? messages.success : messages.error);
-    return res.status(code).json({ code, success, message, data, ...rest });
+    return res.status(code).json({ code, success, message, data, error });
   };
 
   next();

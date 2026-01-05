@@ -77,10 +77,20 @@ export const sharedSchemas = {
     const maxFileSizeInMB = toMegabytes(maxFileSize).toFixed(2);
 
     let schema = z
-      .file()
-      .mime(mimeTypes, { error: mimeInvalid(displayName) })
-      .min(1)
-      .max(maxFileSize, { error: tooLarge(displayName, maxFileSizeInMB) })
+      .object({
+        fieldname: z.string(),
+        originalname: z.string(),
+        encoding: z.string(),
+        buffer: z.instanceof(Buffer),
+        mimetype: z.string().refine((v) => mimeTypes.includes(v), {
+          error: mimeInvalid(displayName),
+        }),
+        size: z
+          .number()
+          .min(1)
+          .max(maxFileSize, { error: tooLarge(displayName, maxFileSizeInMB) }),
+        path: z.string().optional(),
+      })
       .array();
 
     if (min) {
@@ -233,6 +243,12 @@ export const apiResponseSchema = z.object({
   code: z.number(),
   success: z.boolean(),
   message: z.string(),
+  count: z
+    .intersection(
+      z.object({ total: z.number() }),
+      z.record(z.string(), z.number()),
+    )
+    .optional(),
 });
 
 export const userSchema = authUserSchema.extend({

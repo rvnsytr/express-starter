@@ -107,7 +107,7 @@ router.delete("/", authorize({ storage: ["delete"] }), async (req, res) => {
   const { count, error } = await removeFiles(ids, userId, { by });
   if (error) return res.api({ code: 400, message: error });
 
-  return res.api({ data: count });
+  return res.api({ count: { total: count } });
 });
 
 export { router };
