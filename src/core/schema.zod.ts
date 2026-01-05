@@ -23,7 +23,7 @@ export const sharedSchemas = {
     let schema = z.string({ error: invalid(field) }).trim();
 
     if (sanitize)
-      schema = schema.regex(/[A-Za-z0-9]/, { message: required(field) });
+      schema = schema.regex(/^$|[A-Za-z0-9]/, { message: required(field) });
 
     if (min) {
       const message = min <= 1 ? required : tooShort;
@@ -68,7 +68,7 @@ export const sharedSchemas = {
       maxFileSize?: number;
     },
   ) => {
-    const { mimeInvalid, tooFew, tooMany, tooLarge } = messages.files;
+    const { mimeInvalid, tooLarge, tooFew, tooMany } = messages.files;
     const { displayName, size, mimeTypes } = fileMeta[type];
 
     const min = options?.min;
@@ -77,20 +77,10 @@ export const sharedSchemas = {
     const maxFileSizeInMB = toMegabytes(maxFileSize).toFixed(2);
 
     let schema = z
-      .object({
-        fieldname: z.string(),
-        originalname: z.string(),
-        encoding: z.string(),
-        buffer: z.instanceof(Buffer),
-        mimetype: z.string().refine((v) => mimeTypes.includes(v), {
-          error: mimeInvalid(displayName),
-        }),
-        size: z
-          .number()
-          .min(1)
-          .max(maxFileSize, { error: tooLarge(displayName, maxFileSizeInMB) }),
-        path: z.string().optional(),
-      })
+      .file()
+      .mime(mimeTypes, { error: mimeInvalid(displayName) })
+      .min(1)
+      .max(maxFileSize, { error: tooLarge(displayName, maxFileSizeInMB) })
       .array();
 
     if (min) {
@@ -187,6 +177,18 @@ export const sharedSchemas = {
     },
     { error: "Pilih rentang tanggal yang valid." },
   ),
+
+  jsonString: <T extends z.ZodTypeAny>(schema: T) =>
+    z
+      .string()
+      .transform((str) => {
+        try {
+          return JSON.parse(str);
+        } catch {
+          throw new Error(messages.invalid("JSON"));
+        }
+      })
+      .pipe(schema),
 
   email: z
     .email({ error: messages.invalid("Alamat email") })

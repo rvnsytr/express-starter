@@ -46,6 +46,18 @@ export function snakeToCamel(str: string) {
   return str.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
 }
 
+export function keysToCamel<T>(input: unknown): T {
+  if (Array.isArray(input)) {
+    return input.map((v) => keysToCamel(v)) as T;
+  } else if (input !== null && typeof input === "object") {
+    return Object.fromEntries(
+      Object.entries(input).map(([k, v]) => [snakeToCamel(k), v]),
+    ) as T;
+  }
+
+  return input as T;
+}
+
 export function formatNumber(
   number: number,
   props?: { lang?: Language; options?: Intl.NumberFormatOptions },
@@ -72,16 +84,4 @@ export function formatPhone(number: string | number, prefix?: "+62" | "0") {
 
 export function formatZodError<T>(zodError: ZodError<T>) {
   return JSON.parse(zodError.message)[0].message;
-}
-
-export function keysToCamel<T>(input: unknown): T {
-  if (Array.isArray(input)) {
-    return input.map((v) => keysToCamel(v)) as T;
-  } else if (input !== null && typeof input === "object") {
-    return Object.fromEntries(
-      Object.entries(input).map(([k, v]) => [snakeToCamel(k), v]),
-    ) as T;
-  }
-
-  return input as T;
 }
