@@ -1,5 +1,5 @@
 import { getPresignedUrl, removeFiles } from "@/modules/storage";
-import { betterAuth } from "better-auth";
+import { APIError, betterAuth } from "better-auth";
 import { admin, createAuthMiddleware, openAPI } from "better-auth/plugins";
 import { appMeta } from "./constants";
 import { createDialect, db } from "./db";
@@ -65,7 +65,7 @@ export const auth = betterAuth({
 
   user: {
     additionalFields: {
-      role: { type: "string", input: false, defaultValue: defaultRole },
+      role: { type: allRoles, input: false, defaultValue: defaultRole },
     },
     fields: {
       emailVerified: "email_verified",
@@ -106,26 +106,59 @@ export const auth = betterAuth({
     },
   },
 
+  databaseHooks: {
+    user: {
+      delete: {
+        before: async (user, ctx) => {
+          const session = ctx?.context.session;
+          if (!session || !ctx.headers) throw new APIError("UNAUTHORIZED");
+
+          if (user.image)
+            db.updateTable("storage")
+              .set("deleted_by", session.user.id)
+              .where("id", "=", user.image)
+              .execute();
+
+          auth.api.adminUpdateUser({
+            headers: ctx.headers,
+            body: {
+              userId: user.id,
+              data: { image: null, deletedBy: session.user.id },
+            },
+          });
+
+          return false;
+        },
+      },
+    },
+  },
+
   hooks: {
     after: createAuthMiddleware(async (ctx) => {
       const { session, newSession } = ctx.context;
 
       if (ctx.path === "/get-session") {
-        if (!session) return ctx.json(session);
+        if (!session) return ctx.json(null);
 
         const { session: sessionData, user: userData } = session;
-        if (!userData.image) return ctx.json(session);
+        if (!userData.image) return ctx.json({ ...session, imageId: null });
+
+        const imageId = userData.image;
 
         const file = await db
           .selectFrom("storage")
           .select("file_path")
-          .where("id", "=", userData.image)
+          .where("id", "=", imageId)
           .executeTakeFirst();
 
         if (!file) return ctx.json(session);
         const image = await getPresignedUrl(file.file_path);
 
-        return ctx.json({ session: sessionData, user: { ...userData, image } });
+        return ctx.json({
+          session: sessionData,
+          user: { ...userData, image },
+          imageId,
+        });
       }
 
       if (ctx.path === "/update-user") {

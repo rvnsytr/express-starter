@@ -5,14 +5,14 @@ meta {
 }
 
 delete {
-  url: {{host}}/api/storage/presigned-url
+  url: {{host}}/api/storage
   body: json
   auth: inherit
 }
 
 body:json {
   {
-    "data": ["175AEC8C-6E4B-4EAB-8458-A9DFDFE0A37B"]
+    "ids": ["175AEC8C-6E4B-4EAB-8458-A9DFDFE0A37B"]
   }
 }
 
