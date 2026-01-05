@@ -1,13 +1,27 @@
-import { capitalize, formatDate } from "../utils";
+import { capitalize, formatDate, formatDateDistanceToNow } from "../utils";
 
 export const messages = {
   empty: "Tidak ada hasil yang ditemukan.",
+  loading: "Mohon tunggu sebentar...",
+
+  success: "Sukses",
   error: "Terjadi kesalahan. Silakan coba lagi nanti.",
-  notAuthorized: "Anda tidak memiliki izin untuk melakukan tindakan ini.",
+  notFound: "Sumber daya yang diminta tidak ditemukan.",
+
+  unauthorized: "Anda harus login untuk mengakses fitur ini.",
+  forbidden: "Anda tidak memiliki izin untuk melakukan tindakan ini.",
+
+  removeLabel: (thing: string) =>
+    `Untuk mengonfirmasi, ketik "${thing}" pada kolom di bawah ini.`,
 
   noChanges: (thing: string) => `Tidak ada perubahan pada ${thing}.`,
   thingNotMatch: (thing: string) =>
     `${capitalize(thing, "first")} tidak cocok - silakan periksa kembali.`,
+
+  thingAgo: (thing: string, time: Date) =>
+    `${capitalize(thing, "first")} ${formatDateDistanceToNow(time)} yang lalu.`,
+  dateAgo: (time: Date) =>
+    `${formatDate(time, "PPPp")} - ${formatDateDistanceToNow(time)} yang lalu.`,
 
   // -- Validation
   invalid: (field: string) => `${capitalize(field, "first")} tidak valid.`,

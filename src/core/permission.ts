@@ -1,4 +1,3 @@
-// * NOTE: Sync this file with frontend `@/src/core/permission.ts`
 // https://www.better-auth.com/docs/plugins/admin#admin-roles
 
 import { createAccessControl } from "better-auth/plugins/access";
@@ -16,7 +15,7 @@ export const ac = createAccessControl({
 
 export const roles = {
   user: ac.newRole({
-    storage: ["create", "list"],
+    storage: ["create", "list", "delete"],
   }),
 
   admin: ac.newRole({

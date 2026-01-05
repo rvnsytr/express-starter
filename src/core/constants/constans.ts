@@ -1,3 +1,22 @@
+export type ActionResponse<TData> =
+  | {
+      success: true;
+      count: { total: number } & Record<string, number>;
+      data: TData;
+    }
+  | { success: false; error: string };
+
+export const allRequestMetaKey = [
+  "basePath",
+  "href",
+  "origin",
+  "hostname",
+  "pathname",
+  "hash",
+  "search",
+] as const;
+export type RequestMetaKey = (typeof allRequestMetaKey)[number];
+
 export const allGenders = ["m", "f"] as const;
 export type Gender = (typeof allGenders)[number];
 export const genderMeta: Record<
