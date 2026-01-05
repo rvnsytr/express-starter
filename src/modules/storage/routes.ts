@@ -10,16 +10,17 @@ import { getPresignedUrl, removeFiles, uploadFiles } from "./actions";
 const router = Router();
 
 router.get("/", authorize({ storage: ["list"] }), async (req, res) => {
-  const parsed = z
+  const bodyParsed = z
     .object({
       url: z.coerce.boolean().optional().default(false),
       category: storageTableSchema.shape.category.optional(),
     })
     .safeParse(req.query);
-  if (!parsed.success)
-    return res.api({ code: 400, message: formatZodError(parsed.error) });
 
-  const { url: withUrl, category } = parsed.data;
+  if (!bodyParsed.success)
+    return res.api({ code: 400, message: formatZodError(bodyParsed.error) });
+
+  const { url: withUrl, category } = bodyParsed.data;
 
   let query = db.selectFrom("storage").selectAll();
   if (category) query = query.where("category", "=", category);
@@ -44,10 +45,14 @@ router.post(
   authorize({ storage: ["list"] }),
   async (req, res) => {
     try {
-      const parsed = z.object({ data: z.string().array() }).safeParse(req.body);
-      if (!parsed.success) throw new Error(formatZodError(parsed.error));
+      const bodyParsed = z
+        .object({ data: z.string().array() })
+        .safeParse(req.body);
 
-      const { data: keys } = parsed.data;
+      if (!bodyParsed.success)
+        throw new Error(formatZodError(bodyParsed.error));
+
+      const { data: keys } = bodyParsed.data;
 
       const result = await db
         .selectFrom("storage")
@@ -84,19 +89,22 @@ router.post(
   },
 );
 
-router.delete("/:id", authorize({ storage: ["delete"] }), async (req, res) => {
-  const userId = req.session!.user.id;
+router.delete("/", authorize({ storage: ["delete"] }), async (req, res) => {
+  const bodyParsed = z
+    .object({ ids: z.array(z.uuidv4()), userId: z.string() })
+    .safeParse(req.body);
 
-  const keys = z.uuidv4().safeParse(req.params.id);
-  if (!keys.success) throw new Error(formatZodError(keys.error));
+  if (!bodyParsed.success) throw new Error(formatZodError(bodyParsed.error));
 
   const queryParsed = z
     .object({ by: z.enum(["id", "file_path"]).default("id") })
     .safeParse(req.query);
   if (!queryParsed.success) throw new Error(formatZodError(queryParsed.error));
-  const { by } = queryParsed.data;
 
-  const { count, error } = await removeFiles([keys.data], userId, { by });
+  const { by } = queryParsed.data;
+  const { ids, userId } = bodyParsed.data;
+
+  const { count, error } = await removeFiles(ids, userId, { by });
   if (error) return res.api({ code: 400, message: error });
 
   return res.api({ data: count });

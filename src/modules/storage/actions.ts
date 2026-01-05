@@ -39,6 +39,7 @@ export type UploadFilesOptions = {
 export type RemoveFilesOptions = {
   by?: "id" | "file_path";
   db?: Kysely<Database>;
+  disabled?: boolean;
 };
 
 export async function uploadFiles(req: Request, options?: UploadFilesOptions) {
@@ -66,6 +67,7 @@ export async function uploadFiles(req: Request, options?: UploadFilesOptions) {
 
     const overwriteByQuery = options?.overwriteByQuery ?? false;
     const database = options?.db ?? db;
+    const isDisabled = options?.disabled ?? false;
     const createdBy = userSchema.data;
 
     const fileNameOption = overwriteByQuery
@@ -108,7 +110,7 @@ export async function uploadFiles(req: Request, options?: UploadFilesOptions) {
 
         let fileUrl = undefined;
 
-        if (!(options?.disabled ?? false)) {
+        if (!isDisabled) {
           await database
             .insertInto("storage")
             .values({
@@ -177,14 +179,20 @@ export async function removeFiles(
     const deletedBy = userSchema.data;
     const searchBy = options?.by ?? "id";
     const database = options?.db ?? db;
+    const isDisabled = options?.disabled ?? false;
 
-    const { numUpdatedRows } = await database
-      .updateTable("storage")
-      .set({ deleted_by: deletedBy, deleted_at: new Date() })
-      .where(searchBy, "in", keys)
-      .executeTakeFirst();
+    let count = 0;
 
-    return { count: Number(numUpdatedRows), error: null };
+    if (!isDisabled) {
+      const { numUpdatedRows } = await database
+        .updateTable("storage")
+        .set({ deleted_by: deletedBy, deleted_at: new Date() })
+        .where(searchBy, "in", keys)
+        .executeTakeFirst();
+      count = Number(numUpdatedRows);
+    }
+
+    return { count, error: null };
   } catch (e) {
     const error =
       e instanceof Error ? e.message : "Terjadi kesalahan saat menghapus file.";
