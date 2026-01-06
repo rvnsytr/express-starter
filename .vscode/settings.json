@@ -1,10 +1,10 @@
 {
-  // "files.readonlyInclude": { "**/core/**": true },
+  "files.readonlyInclude": { "**/core/**": true },
 
   "files.readonlyExclude": {
-    "**/core/schemas.sql": true,
-    "**/core/schemas.db.ts": true,
-    "**/core/schemas.zod.ts": true
+    "**/core/schema.sql": true,
+    "**/core/schema.db.ts": true,
+    "**/core/schema.zod.ts": true
   },
 
   "typescript.preferences.importModuleSpecifier": "shortest",
