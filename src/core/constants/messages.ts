@@ -1,15 +1,15 @@
 import { capitalize, formatDate, formatDateDistanceToNow } from "../utils";
 
 export const messages = {
-  empty: "Tidak ada hasil yang ditemukan.",
   loading: "Mohon tunggu sebentar...",
+  empty: "Tidak ada hasil yang ditemukan.",
+  notFound: "Sumber daya yang diminta tidak ditemukan.",
 
   success: "Sukses",
   error: "Terjadi kesalahan. Silakan coba lagi nanti.",
-  notFound: "Sumber daya yang diminta tidak ditemukan.",
 
-  unauthorized: "Anda harus login untuk mengakses fitur ini.",
-  forbidden: "Anda tidak memiliki izin untuk melakukan tindakan ini.",
+  unauthorized: "Tindakan tidak terautentikasi",
+  forbidden: "Tidak memiliki izin untuk melakukan tindakan ini.",
 
   removeLabel: (thing: string) =>
     `Untuk mengonfirmasi, ketik "${thing}" pada kolom di bawah ini.`,

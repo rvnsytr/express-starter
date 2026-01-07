@@ -14,12 +14,16 @@ export type ApiResponse<T> = z.infer<typeof apiResponseSchema> & {
 };
 
 export const init: RequestHandler = (_req, res, next) => {
+  const nodeEnv = process.env.NODE_ENV ?? "local";
+  const isShowError = nodeEnv === "local" || nodeEnv === "development";
+
   res.api = <T>(payload: Partial<ApiResponse<T>>) => {
-    const { code: pyCode, message: pyMessage, data: pyData, error } = payload;
-    const code = pyCode ?? 200;
+    const code = payload.code ?? 200;
     const success = code >= 200 && code < 300;
-    const data = pyData ?? null;
-    const message = pyMessage ?? (success ? messages.success : messages.error);
+    const data = payload.data ?? null;
+    const message =
+      payload.message ?? (success ? messages.success : messages.error);
+    const error = isShowError ? payload.error : undefined;
     return res.status(code).json({ code, success, message, data, error });
   };
 
@@ -37,19 +41,10 @@ export const notFoundHandler: RequestHandler = (_req, res) => {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
-  const nodeEnv = process.env.NODE_ENV ?? "local";
-  const isShowError = nodeEnv === "local" || nodeEnv === "development";
-
   console.error(err);
-
-  if (err instanceof APIError) {
-    const { statusCode, body } = err;
-    const error = isShowError ? body : undefined;
-    return res.api({ code: statusCode, message: messages.error, error });
-  }
-
-  const error = isShowError ? (err.message ?? undefined) : undefined;
-  return res.api({ code: 500, message: messages.error, error });
+  if (err instanceof APIError)
+    return res.api({ code: err.statusCode, error: err.body ?? undefined });
+  return res.api({ code: 500, error: err?.message });
 };
 
 export function authorize(permissions: Permissions): RequestHandler {
