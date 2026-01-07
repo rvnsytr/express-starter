@@ -1,17 +1,26 @@
 meta {
   name: /api/auth/admin/list-users
   type: http
-  seq: 8
+  seq: 6
 }
 
 get {
   url: {{host}}/api/auth/admin/list-users
-  body: none
+  body: json
   auth: none
 }
 
 headers {
   Origin: {{origin}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "state": {
+      "globalFilter": "rvns"
+    }
+  }
 }
 
 settings {

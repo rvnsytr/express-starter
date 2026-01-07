@@ -1,13 +1,17 @@
 meta {
-  name: /api/storage/presigned-url
+  name: /api/storage - DEL
   type: http
-  seq: 10
+  seq: 3
 }
 
 delete {
   url: {{host}}/api/storage
   body: json
-  auth: inherit
+  auth: none
+}
+
+headers {
+  Origin: {{origin}}
 }
 
 body:json {

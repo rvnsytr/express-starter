@@ -1,17 +1,17 @@
 meta {
   name: /api/storage
   type: http
-  seq: 9
+  seq: 3
 }
 
 post {
-  url: {{host}}/api/storage?fileName=something
+  url: {{host}}/api/storage
   body: multipartForm
   auth: none
 }
 
 params:query {
-  fileName: something
+  ~fileName: something
   ~url: true
 }
 
@@ -20,8 +20,7 @@ headers {
 }
 
 body:multipart-form {
-  image: @file(/home/ravensky/Projects/purnaku-app/public/cover.png)
-  ~something: Something
+  file: @file(/home/ravensky/Pictures/WhatsApp Image 2025-11-06 at 8.31.43 AM.jpeg)
 }
 
 settings {
