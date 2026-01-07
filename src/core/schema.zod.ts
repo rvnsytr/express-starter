@@ -1,12 +1,19 @@
-import { Role } from "@/core/auth";
-import { userSchema as authUserSchema } from "better-auth";
+import { allRoles } from "@/core/auth";
+import {
+  accountSchema as authAccountSchema,
+  sessionSchema as authSessionSchema,
+  userSchema as authUserSchema,
+  verificationSchema as authVerificationSchema,
+} from "better-auth";
 import z from "zod";
 import { id } from "zod/locales";
 import { allGenders, fileMeta, FileType, messages } from "./constants";
-import { roles } from "./permission";
+import { allFilterOperators } from "./constants/filter";
 import { toMegabytes } from "./utils";
 
 z.config(id());
+
+// #region CORE
 
 export const sharedSchemas = {
   string: (
@@ -251,12 +258,45 @@ export const apiResponseSchema = z.object({
     .optional(),
 });
 
-export const userSchema = authUserSchema.extend({
-  email: sharedSchemas.email,
-  name: sharedSchemas.string("Nama", { min: 1 }),
-  image: z.string().optional().nullable(),
-  role: z.enum(Object.keys(roles) as Role[]),
+// #endregion
+
+// #region DATA TABLE
+
+export const dataTableStateSchema = z.object({
+  globalFilter: z.string().default(""),
+  columnFilter: z
+    .object({
+      id: z.string(),
+      value: z.object({
+        operator: z.enum(allFilterOperators),
+        values: z.union([z.string(), z.number(), z.date()]).array(),
+      }),
+    })
+    .array()
+    .default([]),
+  sorting: z.object({ id: z.string(), desc: z.boolean() }).array().default([]),
+  pagination: z
+    .object({ pageIndex: z.number(), pageSize: z.number() })
+    .default({ pageIndex: 0, pageSize: 10 }),
 });
+
+export const dataTableConfigSchema = z.object({});
+
+export const dataTableSchema = z
+  .object({
+    state: dataTableStateSchema,
+    // config: dataTableConfigSchema,
+  })
+  .default({
+    state: {
+      globalFilter: "",
+      columnFilter: [],
+      sorting: [],
+      pagination: { pageIndex: 0, pageSize: 10 },
+    },
+  });
+
+// #endregion
 
 export const storageTableSchema = z.object({
   id: z.uuidv4(),
@@ -274,3 +314,85 @@ export const storageTableSchema = z.object({
   created_at: sharedSchemas.createdAt,
   created_by: sharedSchemas.createdBy,
 });
+
+export const userSchema = authUserSchema.extend({
+  email: sharedSchemas.email,
+  name: sharedSchemas.string("Nama", { min: 1 }),
+  image: z.string().optional().nullable(),
+  role: z.lazy(() => z.enum(allRoles)),
+  banned: z.boolean().optional().nullable(),
+  bannedReason: z.string().optional().nullable(),
+  bannedExpires: z.date().optional().nullable(),
+});
+
+export const userTableSchema = userSchema.transform(
+  ({ emailVerified, createdAt, updatedAt, ...rest }) => ({
+    ...rest,
+    email_verified: emailVerified,
+    created_at: createdAt,
+    updated_at: updatedAt,
+  }),
+);
+
+export const accountTableSchema = authAccountSchema.transform(
+  ({
+    accountId,
+    providerId,
+    userId,
+    accessToken,
+    refreshToken,
+    idToken,
+    accessTokenExpiresAt,
+    refreshTokenExpiresAt,
+    createdAt,
+    updatedAt,
+    ...rest
+  }) => ({
+    ...rest,
+    account_id: accountId,
+    provider_id: providerId,
+    user_id: userId,
+    access_token: accessToken,
+    refresh_token: refreshToken,
+    id_token: idToken,
+    access_token_expires_at: accessTokenExpiresAt,
+    refresh_token_expires_at: refreshTokenExpiresAt,
+    created_at: createdAt,
+    updated_at: updatedAt,
+  }),
+);
+
+export const sessionSchema = authSessionSchema.extend({
+  impersonatedBy: z.string().nullable().optional(),
+});
+
+export const sessionTableSchema = sessionSchema.transform(
+  ({
+    expiresAt,
+    createdAt,
+    updatedAt,
+    ipAddress,
+    userAgent,
+    userId,
+    impersonatedBy,
+    ...rest
+  }) => ({
+    ...rest,
+    expires_at: expiresAt,
+    created_at: createdAt,
+    updated_at: updatedAt,
+    ip_address: ipAddress,
+    user_agent: userAgent,
+    user_id: userId,
+    impersonated_by: impersonatedBy,
+  }),
+);
+
+export const verificationTableSchema = authVerificationSchema.transform(
+  ({ expiresAt, createdAt, updatedAt, ...rest }) => ({
+    ...rest,
+    expires_at: expiresAt,
+    created_at: createdAt,
+    updated_at: updatedAt,
+  }),
+);

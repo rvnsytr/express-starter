@@ -95,7 +95,7 @@ export const auth = betterAuth({
       ipAddress: "ip_address",
       userAgent: "user_agent",
       userId: "user_id",
-      // impersonatedBy: "impersonated_by",
+      impersonatedBy: "impersonated_by",
     },
   },
   verification: {
@@ -109,23 +109,20 @@ export const auth = betterAuth({
   databaseHooks: {
     user: {
       delete: {
-        before: async (user, ctx) => {
+        before: async (_user, ctx) => {
           const session = ctx?.context.session;
           if (!session || !ctx.headers) throw new APIError("UNAUTHORIZED");
 
-          if (user.image)
-            db.updateTable("storage")
-              .set("deleted_by", session.user.id)
-              .where("id", "=", user.image)
-              .execute();
+          // if (user.image)
+          //   db.updateTable("storage")
+          //     .set("deleted_by", session.user.id)
+          //     .where("id", "=", user.image)
+          //     .execute();
 
-          auth.api.adminUpdateUser({
-            headers: ctx.headers,
-            body: {
-              userId: user.id,
-              data: { image: null, deletedBy: session.user.id },
-            },
-          });
+          // auth.api.adminUpdateUser({
+          //   headers: ctx.headers,
+          //   body: { userId: user.id, data: { image: null } },
+          // });
 
           return false;
         },
