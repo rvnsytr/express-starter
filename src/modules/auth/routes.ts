@@ -28,6 +28,14 @@ router.get(
     const { state } = bodyParsed.data;
 
     const data = await withDataTable(qb, state, {
+      columns: {
+        name: "u.name",
+        email: "u.email",
+        status: "u.banned",
+        role: "u.role",
+        updatedAt: "u.updated_at",
+        createdAt: "u.created_at",
+      },
       globalFilter: ["u.name", "u.email"],
       defaultOrder: { id: "u.created_at", desc: true },
     }).execute();
