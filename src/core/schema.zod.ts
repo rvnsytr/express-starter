@@ -266,7 +266,7 @@ export const dataTableSchema = z
         id: z.string(),
         value: z.object({
           operator: z.enum(allFilterOperators),
-          values: z.union([z.string(), z.number(), z.date()]).array(),
+          values: z.union([z.string(), z.number(), z.coerce.date()]).array(),
         }),
       })
       .array()
