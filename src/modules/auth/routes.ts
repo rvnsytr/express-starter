@@ -18,20 +18,20 @@ router.post(
     const countQb = db
       .selectFrom("user as u")
       .leftJoin("storage as s", "u.image", "s.id")
-      .select(({ fn }) => [
-        fn.count<number>("u.id").as("total"),
-        fn
-          .sum<number>(sql`CASE WHEN u.role = 'user' THEN 1 ELSE 0 END`)
-          .as("user"),
-        fn
-          .sum<number>(sql`CASE WHEN u.role = 'admin' THEN 1 ELSE 0 END`)
-          .as("admin"),
-        fn
-          .sum<number>(sql`CASE WHEN u.banned = 1 THEN 1 ELSE 0 END`)
-          .as("banned"),
-        fn
-          .sum<number>(sql`CASE WHEN u.banned = 0 THEN 1 ELSE 0 END`)
-          .as("active"),
+      .select(() => [
+        sql<number>`COUNT(u.id)`.as("total"),
+        sql<number>`COALESCE(SUM(CASE WHEN u.role = 'user' THEN 1 ELSE 0 END), 0)`.as(
+          "user",
+        ),
+        sql<number>`COALESCE(SUM(CASE WHEN u.role = 'admin' THEN 1 ELSE 0 END), 0)`.as(
+          "admin",
+        ),
+        sql<number>`COALESCE(SUM(CASE WHEN u.banned = 1 THEN 1 ELSE 0 END), 0)`.as(
+          "banned",
+        ),
+        sql<number>`COALESCE(SUM(CASE WHEN u.banned = 0 THEN 1 ELSE 0 END), 0)`.as(
+          "active",
+        ),
       ]);
 
     const dataQb = db
