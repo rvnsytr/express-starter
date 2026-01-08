@@ -1,74 +1,76 @@
 import { auth } from "@/core/auth";
-import { withDataTable } from "@/core/data-table";
+import { defineWDT, withDataTable } from "@/core/data-table";
 import { db } from "@/core/db";
 import { authorize } from "@/core/middlewares";
 import { dataTableSchema } from "@/core/schema.zod";
-import { formatZodError } from "@/core/utils";
-import { fromNodeHeaders, toNodeHandler } from "better-auth/node";
+import { camelize, formatZodError } from "@/core/utils";
+import { toNodeHandler } from "better-auth/node";
 import { json, Router } from "express";
-import { getPresignedUrl } from "../storage";
+import { sql } from "kysely";
 
 const router = Router();
 
-router.get(
+router.post(
   "/admin/list-users",
   authorize({ user: ["list"] }),
   json(),
   async (req, res) => {
-    const qb = db
+    const countQb = db
       .selectFrom("user as u")
       .leftJoin("storage as s", "u.image", "s.id")
-      .select(["s.id as file_id", "s.file_path"])
-      .selectAll(["u"]);
+      .select(({ fn }) => [
+        fn.count<number>("u.id").as("total"),
+        fn
+          .sum<number>(sql`CASE WHEN u.role = 'user' THEN 1 ELSE 0 END`)
+          .as("user"),
+        fn
+          .sum<number>(sql`CASE WHEN u.role = 'admin' THEN 1 ELSE 0 END`)
+          .as("admin"),
+        fn
+          .sum<number>(sql`CASE WHEN u.banned = 1 THEN 1 ELSE 0 END`)
+          .as("banned"),
+        fn
+          .sum<number>(sql`CASE WHEN u.banned = 0 THEN 1 ELSE 0 END`)
+          .as("active"),
+      ]);
+
+    const dataQb = db
+      .selectFrom("user as u")
+      .leftJoin("storage as s", "u.image", "s.id")
+      .selectAll("u")
+      .select(["s.id as file_id", "s.file_path"]);
 
     const bodyParsed = dataTableSchema.safeParse(req.body);
     if (!bodyParsed.success)
       return res.api({ code: 400, message: formatZodError(bodyParsed.error) });
 
-    const { state } = bodyParsed.data;
-
-    const data = await withDataTable(qb, state, {
-      columns: {
-        name: "u.name",
-        email: "u.email",
-        status: "u.banned",
-        role: "u.role",
-        updatedAt: "u.updated_at",
-        createdAt: "u.created_at",
+    const dataDef = defineWDT({
+      queryBuilder: dataQb,
+      config: {
+        columns: {
+          name: { column: "u.name", type: "string" },
+          email: { column: "u.email", type: "string" },
+          status: {
+            column: "u.banned",
+            type: "boolean",
+            parser: (v) => typeof v === "string" && v === "banned",
+          },
+          role: { column: "u.role", type: "string" },
+          updatedAt: { column: "u.updated_at", type: "string" },
+          createdAt: { column: "u.created_at", type: "string" },
+        },
+        defaultOrderBy: { column: "u.created_at", desc: true },
       },
-      globalFilter: ["u.name", "u.email"],
-      defaultOrder: { id: "u.created_at", desc: true },
-    }).execute();
-
-    return res.api({ code: 200, data: { state, data } });
-
-    const result = await auth.api.listUsers({
-      headers: fromNodeHeaders(req.headers),
-      query: { sortBy: "createdAt", sortDirection: "desc" },
     });
 
-    const { users, ...rest } = result;
-    const userImageIds = users.map((u) => u.image ?? null).filter((v) => !!v);
+    const count = await withDataTable(bodyParsed.data, {
+      queryBuilder: countQb,
+      config: { ...dataDef.config, disabled: ["sorting", "pagination"] },
+    }).executeTakeFirst();
 
-    let query = db
-      .selectFrom("storage")
-      .select(["id", "file_path"])
-      .where("category", "=", "image")
-      .where("deleted_at", "is", null);
+    const data = await withDataTable(bodyParsed.data, dataDef).execute();
 
-    if (userImageIds.length) query = query.where("id", "in", userImageIds);
-    const images = await query.execute();
-
-    const usersWithImage = await Promise.all(
-      users.map(async ({ image: imageId, ...rest }) => {
-        const imagePath =
-          images.find((img) => img.id === imageId)?.file_path ?? null;
-        const image = imagePath ? await getPresignedUrl(imagePath) : null;
-        return { ...rest, image, imageId };
-      }),
-    );
-
-    res.json({ users: usersWithImage, ...rest });
+    return res.api({ count, data: camelize(data) });
   },
 );
 

@@ -2,13 +2,13 @@ CREATE TABLE [user] (
     id NVARCHAR(36) NOT NULL PRIMARY KEY,
     name NVARCHAR(255) NOT NULL,
     email NVARCHAR(255) NOT NULL UNIQUE,
-    email_verified SMALLINT NOT NULL,
+    email_verified BIT NOT NULL,
     image NVARCHAR(MAX),
     created_at DATETIMEOFFSET NOT NULL DEFAULT SYSDATETIMEOFFSET(),
     updated_at DATETIMEOFFSET NOT NULL DEFAULT SYSDATETIMEOFFSET(),
 
     role NVARCHAR(64) NOT NULL,
-    banned SMALLINT,
+    banned BIT,
     ban_reason NVARCHAR(MAX),
     ban_expires DATETIMEOFFSET
 );

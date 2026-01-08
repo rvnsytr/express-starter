@@ -1,9 +1,9 @@
 import { allRoles } from "@/core/auth";
 import {
-  accountSchema as authAccountSchema,
-  sessionSchema as authSessionSchema,
-  userSchema as authUserSchema,
-  verificationSchema as authVerificationSchema,
+  accountSchema as betterAuthAccountSchema,
+  sessionSchema as betterAuthSessionSchema,
+  userSchema as betterAuthUserSchema,
+  verificationSchema as betterAuthVerificationSchema,
 } from "better-auth";
 import z from "zod";
 import { id } from "zod/locales";
@@ -258,42 +258,32 @@ export const apiResponseSchema = z.object({
     .optional(),
 });
 
-// #endregion
-
-// #region DATA TABLE
-
-export const dataTableStateSchema = z.object({
-  globalFilter: z.string().default(""),
-  columnFilter: z
-    .object({
-      id: z.string(),
-      value: z.object({
-        operator: z.enum(allFilterOperators),
-        values: z.union([z.string(), z.number(), z.date()]).array(),
-      }),
-    })
-    .array()
-    .default([]),
-  sorting: z.object({ id: z.string(), desc: z.boolean() }).array().default([]),
-  pagination: z
-    .object({ pageIndex: z.number(), pageSize: z.number() })
-    .default({ pageIndex: 0, pageSize: 10 }),
-});
-
-export const dataTableConfigSchema = z.object({});
-
 export const dataTableSchema = z
   .object({
-    state: dataTableStateSchema,
-    // config: dataTableConfigSchema,
+    globalFilter: z.string().default(""),
+    columnFilters: z
+      .object({
+        id: z.string(),
+        value: z.object({
+          operator: z.enum(allFilterOperators),
+          values: z.union([z.string(), z.number(), z.date()]).array(),
+        }),
+      })
+      .array()
+      .default([]),
+    sorting: z
+      .object({ id: z.string(), desc: z.boolean() })
+      .array()
+      .default([]),
+    pagination: z
+      .object({ pageIndex: z.number(), pageSize: z.number() })
+      .default({ pageIndex: 0, pageSize: 10 }),
   })
   .default({
-    state: {
-      globalFilter: "",
-      columnFilter: [],
-      sorting: [],
-      pagination: { pageIndex: 0, pageSize: 10 },
-    },
+    globalFilter: "",
+    columnFilters: [],
+    sorting: [],
+    pagination: { pageIndex: 0, pageSize: 10 },
   });
 
 // #endregion
@@ -315,54 +305,72 @@ export const storageTableSchema = z.object({
   created_by: sharedSchemas.createdBy,
 });
 
-export const userSchema = authUserSchema.extend({
+export const userSchema = betterAuthUserSchema.extend({
   email: sharedSchemas.email,
   name: sharedSchemas.string("Nama", { min: 1 }),
   image: z.string().optional().nullable(),
   role: z.lazy(() => z.enum(allRoles)),
   banned: z.boolean().optional().nullable(),
-  bannedReason: z.string().optional().nullable(),
-  bannedExpires: z.date().optional().nullable(),
+  banReason: z.string().optional().nullable(),
+  banExpires: z.date().optional().nullable(),
+  createdAt: sharedSchemas.createdAt,
+  updatedAt: sharedSchemas.updatedAt,
 });
 
 export const userTableSchema = userSchema.transform(
-  ({ emailVerified, createdAt, updatedAt, ...rest }) => ({
+  ({
+    emailVerified,
+    createdAt,
+    updatedAt,
+    banReason,
+    banExpires,
+    ...rest
+  }) => ({
     ...rest,
     email_verified: emailVerified,
     created_at: createdAt,
     updated_at: updatedAt,
+    ban_reason: banReason,
+    ban_expires: banExpires,
   }),
 );
 
-export const accountTableSchema = authAccountSchema.transform(
-  ({
-    accountId,
-    providerId,
-    userId,
-    accessToken,
-    refreshToken,
-    idToken,
-    accessTokenExpiresAt,
-    refreshTokenExpiresAt,
-    createdAt,
-    updatedAt,
-    ...rest
-  }) => ({
-    ...rest,
-    account_id: accountId,
-    provider_id: providerId,
-    user_id: userId,
-    access_token: accessToken,
-    refresh_token: refreshToken,
-    id_token: idToken,
-    access_token_expires_at: accessTokenExpiresAt,
-    refresh_token_expires_at: refreshTokenExpiresAt,
-    created_at: createdAt,
-    updated_at: updatedAt,
-  }),
-);
+export const accountTableSchema = betterAuthAccountSchema
+  .extend({
+    createdAt: sharedSchemas.createdAt,
+    updatedAt: sharedSchemas.updatedAt,
+  })
+  .transform(
+    ({
+      accountId,
+      providerId,
+      userId,
+      accessToken,
+      refreshToken,
+      idToken,
+      accessTokenExpiresAt,
+      refreshTokenExpiresAt,
+      createdAt,
+      updatedAt,
+      ...rest
+    }) => ({
+      ...rest,
+      account_id: accountId,
+      provider_id: providerId,
+      user_id: userId,
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      id_token: idToken,
+      access_token_expires_at: accessTokenExpiresAt,
+      refresh_token_expires_at: refreshTokenExpiresAt,
+      created_at: createdAt,
+      updated_at: updatedAt,
+    }),
+  );
 
-export const sessionSchema = authSessionSchema.extend({
+export const sessionSchema = betterAuthSessionSchema.extend({
+  createdAt: sharedSchemas.createdAt,
+  updatedAt: sharedSchemas.updatedAt,
   impersonatedBy: z.string().nullable().optional(),
 });
 
@@ -388,11 +396,14 @@ export const sessionTableSchema = sessionSchema.transform(
   }),
 );
 
-export const verificationTableSchema = authVerificationSchema.transform(
-  ({ expiresAt, createdAt, updatedAt, ...rest }) => ({
+export const verificationTableSchema = betterAuthVerificationSchema
+  .extend({
+    createdAt: sharedSchemas.createdAt,
+    updatedAt: sharedSchemas.updatedAt,
+  })
+  .transform(({ expiresAt, createdAt, updatedAt, ...rest }) => ({
     ...rest,
     expires_at: expiresAt,
     created_at: createdAt,
     updated_at: updatedAt,
-  }),
-);
+  }));

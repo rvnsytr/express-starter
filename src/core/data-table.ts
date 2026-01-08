@@ -5,64 +5,124 @@ import {
   SqlBool,
 } from "kysely";
 import z from "zod";
-import { dataTableStateSchema } from "./schema.zod";
+import { dataTableSchema } from "./schema.zod";
 
-type DataTableState = z.infer<typeof dataTableStateSchema>;
+type DataTableState = z.infer<typeof dataTableSchema>;
 
-export type WDTConfig<DB, TB extends keyof DB> = {
-  disabled?: (keyof DataTableState)[];
-  columns: Record<string, ReferenceExpression<DB, TB>>;
-  globalFilter?: ReferenceExpression<DB, TB>[];
-  defaultOrder: { id: ReferenceExpression<DB, TB>; desc: boolean };
+type ConfigParserValue = string | number | Date;
+
+type WDTColumnConfig<DB, TB extends keyof DB> = {
+  column: ReferenceExpression<DB, TB>;
+} & (
+  | { type: "string"; parser?: (value: ConfigParserValue) => string }
+  | { type: "number"; parser?: (value: ConfigParserValue) => number }
+  | { type: "date"; parser?: (value: ConfigParserValue) => Date }
+  | { type: "boolean"; parser: (value: ConfigParserValue) => boolean }
+);
+
+type WithDataTable<DB, TB extends keyof DB, O> = {
+  queryBuilder: SelectQueryBuilder<DB, TB, O>;
+  config: {
+    disabled?: (keyof DataTableState)[];
+    columns: Record<string, WDTColumnConfig<DB, TB>>;
+    defaultOrderBy: { column: ReferenceExpression<DB, TB>; desc: boolean };
+  };
 };
 
+export const defineWDT = <DB, TB extends keyof DB, O>(
+  config: WithDataTable<DB, TB, O>,
+) => config;
+
 export function withDataTable<DB, TB extends keyof DB, O>(
-  qb: SelectQueryBuilder<DB, TB, O>,
   state: DataTableState,
-  config: WDTConfig<DB, TB>,
+  definition: WithDataTable<DB, TB, O>,
 ) {
-  // * Global Filter
+  let qb = definition.queryBuilder;
+  const { config } = definition;
+
+  // #region Global Filter
+  const columnValues = Object.values(config.columns);
+  const globalFilterCols = columnValues.filter((v) => v.type === "string");
+
   if (
     !config.disabled?.includes("globalFilter") &&
     state.globalFilter &&
-    config.globalFilter
+    globalFilterCols.length
   ) {
     const value = `%${state.globalFilter}%`;
     qb = qb.where((eb) => {
       const ors: Expression<SqlBool>[] = [];
-      config.globalFilter?.forEach((id) => ors.push(eb(id, "like", value)));
+      globalFilterCols.forEach((c) => ors.push(eb(c.column, "like", value)));
       return eb.or(ors);
     });
   }
+  // #endregion
 
   // TODO: Column Filters
-  // if (!config.disabled?.includes("columnFilter"))
+  // if (!config.disabled?.includes("columnFilters") && state.columnFilters) {
+  //   const ilikeOperators: FilterOperators[] = ["contains"];
+  //   const notIlikeOperators: FilterOperators[] = ["does not contain"];
 
-  // * Sorting
+  //   const eqOperators: FilterOperators[] = ["is"];
+  //   const notEqOperators: FilterOperators[] = ["is not"];
+
+  //   const ltOperators: FilterOperators[] = ["is less than", "is before"];
+  //   const lteOperators: FilterOperators[] = [
+  //     "is less than or equal to",
+  //     "is on or before",
+  //   ];
+  //   const gtOperators: FilterOperators[] = ["is greater than", "is after"];
+  //   const gteOperators: FilterOperators[] = [
+  //     "is greater than or equal to",
+  //     "is on or after",
+  //   ];
+
+  //   const betweenOperators: FilterOperators[] = ["is between"];
+  //   const notBetweenOperators: FilterOperators[] = ["is not between"];
+
+  //   const inArrayOperators: FilterOperators[] = ["is any of"];
+  //   const notInArrayOperators: FilterOperators[] = ["is none of"];
+
+  //   const includeAnyOperators: FilterOperators[] = [
+  //     "include",
+  //     "include any of",
+  //   ];
+  //   const excludeAnyOperators: FilterOperators[] = [
+  //     "exclude",
+  //     "exclude if any of",
+  //   ];
+  //   const includeAllOperators: FilterOperators[] = ["include all of"];
+  //   const excludeAllOperators: FilterOperators[] = ["exclude if all"];
+  // }
+
+  // #region Sorting
   const applySorting = () => {
     if (!config.disabled?.includes("sorting") && state.sorting.length) {
       const isSorted = state.sorting
         .map(({ id, desc: isDesc }) => {
-          const col = config.columns[id] ?? null;
-          if (!col) return false;
-          qb = qb.orderBy(col, (ob) => (isDesc ? ob.desc() : ob.asc()));
+          const columnConfig = config.columns[id] ?? null;
+          if (!columnConfig) return null;
+          const { column } = columnConfig;
+          qb = qb.orderBy(column, (ob) => (isDesc ? ob.desc() : ob.asc()));
           return true;
         })
         .some((v) => !!v);
       if (isSorted) return;
     }
 
-    const { id, desc: isDesc } = config.defaultOrder;
-    qb = qb.orderBy(id, (ob) => (isDesc ? ob.desc() : ob.asc()));
+    const { column, desc: isDesc } = config.defaultOrderBy;
+    qb = qb.orderBy(column, (ob) => (isDesc ? ob.desc() : ob.asc()));
   };
 
-  applySorting();
+  if (!config.disabled?.includes("pagination")) applySorting();
+  // #endregion
 
-  // * Pagination
-  if (!config.disabled?.includes("pagination"))
-    qb = qb
-      .offset(state.pagination.pageIndex * state.pagination.pageSize)
-      .fetch(state.pagination.pageSize);
+  // #region Pagination
+  if (!config.disabled?.includes("pagination")) {
+    const { pageIndex, pageSize } = state.pagination;
+    qb = qb.offset(pageIndex * pageSize).fetch(pageSize);
+  }
+  // #endregion
 
   return qb;
 }
