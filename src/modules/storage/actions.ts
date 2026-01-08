@@ -80,7 +80,7 @@ export async function uploadFiles(req: Request, options?: UploadFilesOptions) {
           fieldname,
           originalname,
           mimetype: mimeType,
-          size,
+          size: fileSize,
           buffer,
         } = file;
 
@@ -119,12 +119,12 @@ export async function uploadFiles(req: Request, options?: UploadFilesOptions) {
               category: category,
               file_path: filePath,
               mime_type: mimeType,
-              file_size: size,
+              file_size: fileSize,
               created_by: createdBy,
             })
             .executeTakeFirst();
 
-          await s3.putObject(bucket, filePath, buffer, size, {
+          await s3.putObject(bucket, filePath, buffer, fileSize, {
             "Content-Type": mimeType,
           });
 
@@ -137,7 +137,7 @@ export async function uploadFiles(req: Request, options?: UploadFilesOptions) {
           category,
           filePath,
           mimeType,
-          fileSize: size,
+          fileSize,
           fileUrl,
         };
       }),
