@@ -4,7 +4,7 @@
   "workspaces": {
     "": {
       "dependencies": {
-        "@novu/api": "^3.11.2",
+        "@novu/api": "^3.12.0",
         "better-auth": "^1.4.10",
         "cookie-parser": "^1.4.7",
         "cors": "^2.8.5",
@@ -162,7 +162,7 @@
 
     "@noble/hashes": ["@noble/hashes@2.0.1", "", {}, "sha512-XlOlEbQcE9fmuXxrVTXCTlG2nlRXa9Rj3rr5Ue/+tX+nmkgbX720YHh0VR3hBF9xDvwnb8D2shVGOwNx+ulArw=="],
 
-    "@novu/api": ["@novu/api@3.11.2", "", { "dependencies": { "zod": "^3.25.0 || ^4.0.0" } }, "sha512-NGp5TogFJwzUuH9ujCMCASwQWo8RHukD7TDAr4xb98+sTl/PC22TR1bk3C+1RBPNN+/KK9pNenheQ6qAyXXeTQ=="],
+    "@novu/api": ["@novu/api@3.12.0", "", { "dependencies": { "zod": "^3.25.0 || ^4.0.0" } }, "sha512-bCN7HgKlgdA4UVfum03MayQKb8O5AkPGsSJKlHmEzL1q6nxvC0XhEiuUkhsJN96eXo9nydeiastqRZDDnbb/Vw=="],
 
     "@standard-schema/spec": ["@standard-schema/spec@1.0.0", "", {}, "sha512-m2bOd0f2RT9k8QJx1JN85cZYyH1RqFBdlwtkSlf4tBDYLCiiZnv1fIIwacK6cqwXavOydf0NPToMQgpKq+dVlA=="],
 
