@@ -1,0 +1,5 @@
+import { Novu } from "@novu/node";
+
+export const novu = new Novu(process.env.NOVU_API_KEY!, {
+  backendUrl: process.env.NOVU_BACKEND_URL!,
+});

@@ -3,6 +3,7 @@ import { APIError, betterAuth } from "better-auth";
 import { admin, createAuthMiddleware, openAPI } from "better-auth/plugins";
 import { appMeta } from "./constants";
 import { createDialect, db } from "./db";
+import { novu } from "./novu";
 import { ac, roles } from "./permission";
 
 export type AuthSession = typeof auth.$Infer.Session;
@@ -38,7 +39,7 @@ export const auth = betterAuth({
 
   emailAndPassword: {
     enabled: true,
-    autoSignIn: false,
+    requireEmailVerification: true,
     // sendResetPassword: async ({ user, url, token }) => {
     //   novu.trigger({
     //     to: {
@@ -60,7 +61,14 @@ export const auth = betterAuth({
   },
   emailVerification: {
     sendOnSignUp: true,
-    // sendVerificationEmail: async ({ user, url, token }) => {},
+    sendVerificationEmail: async ({ user, token }) => {
+      const { name, email } = user;
+      const url = `${appMeta.cors.origin}/verify-user?token=${token}`;
+      await novu.trigger("purnaku-verification", {
+        to: { subscriberId: email, email },
+        payload: { name, url },
+      });
+    },
   },
 
   user: {
@@ -131,6 +139,11 @@ export const auth = betterAuth({
   },
 
   hooks: {
+    // before: createAuthMiddleware(async (ctx) => {
+    //   if (ctx.path === "/sign-up/email")
+    //     throw new APIError("BAD_REQUEST", { message: "BAD" });
+    // }),
+
     after: createAuthMiddleware(async (ctx) => {
       const { session, newSession } = ctx.context;
 
