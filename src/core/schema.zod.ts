@@ -313,8 +313,6 @@ export const userSchema = betterAuthUserSchema.extend({
   banned: z.boolean().optional().nullable(),
   banReason: z.string().optional().nullable(),
   banExpires: z.date().optional().nullable(),
-  createdAt: sharedSchemas.createdAt,
-  updatedAt: sharedSchemas.updatedAt,
 });
 
 export const userTableSchema = userSchema.transform(
@@ -335,42 +333,35 @@ export const userTableSchema = userSchema.transform(
   }),
 );
 
-export const accountTableSchema = betterAuthAccountSchema
-  .extend({
-    createdAt: sharedSchemas.createdAt,
-    updatedAt: sharedSchemas.updatedAt,
-  })
-  .transform(
-    ({
-      accountId,
-      providerId,
-      userId,
-      accessToken,
-      refreshToken,
-      idToken,
-      accessTokenExpiresAt,
-      refreshTokenExpiresAt,
-      createdAt,
-      updatedAt,
-      ...rest
-    }) => ({
-      ...rest,
-      account_id: accountId,
-      provider_id: providerId,
-      user_id: userId,
-      access_token: accessToken,
-      refresh_token: refreshToken,
-      id_token: idToken,
-      access_token_expires_at: accessTokenExpiresAt,
-      refresh_token_expires_at: refreshTokenExpiresAt,
-      created_at: createdAt,
-      updated_at: updatedAt,
-    }),
-  );
+export const accountTableSchema = betterAuthAccountSchema.transform(
+  ({
+    accountId,
+    providerId,
+    userId,
+    accessToken,
+    refreshToken,
+    idToken,
+    accessTokenExpiresAt,
+    refreshTokenExpiresAt,
+    createdAt,
+    updatedAt,
+    ...rest
+  }) => ({
+    ...rest,
+    account_id: accountId,
+    provider_id: providerId,
+    user_id: userId,
+    access_token: accessToken,
+    refresh_token: refreshToken,
+    id_token: idToken,
+    access_token_expires_at: accessTokenExpiresAt,
+    refresh_token_expires_at: refreshTokenExpiresAt,
+    created_at: createdAt,
+    updated_at: updatedAt,
+  }),
+);
 
 export const sessionSchema = betterAuthSessionSchema.extend({
-  createdAt: sharedSchemas.createdAt,
-  updatedAt: sharedSchemas.updatedAt,
   impersonatedBy: z.string().nullable().optional(),
 });
 
@@ -396,14 +387,11 @@ export const sessionTableSchema = sessionSchema.transform(
   }),
 );
 
-export const verificationTableSchema = betterAuthVerificationSchema
-  .extend({
-    createdAt: sharedSchemas.createdAt,
-    updatedAt: sharedSchemas.updatedAt,
-  })
-  .transform(({ expiresAt, createdAt, updatedAt, ...rest }) => ({
+export const verificationTableSchema = betterAuthVerificationSchema.transform(
+  ({ expiresAt, createdAt, updatedAt, ...rest }) => ({
     ...rest,
     expires_at: expiresAt,
     created_at: createdAt,
     updated_at: updatedAt,
-  }));
+  }),
+);

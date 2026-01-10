@@ -20,7 +20,7 @@ export const init: RequestHandler = (_req, res, next) => {
   res.api = <T>(payload: Partial<ApiResponse<T>>) => {
     const code = payload.code ?? 200;
     const success = code >= 200 && code < 300;
-    const count = payload.count ?? null;
+    const count = payload.count ?? undefined;
     const data = payload.data ?? null;
     const message =
       payload.message ?? (success ? messages.success : messages.error);
