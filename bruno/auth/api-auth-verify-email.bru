@@ -1,0 +1,21 @@
+meta {
+  name: /api/auth/verify-email
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{host}}/api/auth/verify-email?token=eyJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImV4YW1wbGVAZXhhbXBsZS5leHh4IiwiaWF0IjoxNzY3OTQ0MDYxLCJleHAiOjE3Njc5NDc2NjF9.Gsu3nKjdCFKlBm4olstovJiWa2YjZaDoapWeGVJEYIY
+  body: none
+  auth: none
+}
+
+params:query {
+  token: eyJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImV4YW1wbGVAZXhhbXBsZS5leHh4IiwiaWF0IjoxNzY3OTQ0MDYxLCJleHAiOjE3Njc5NDc2NjF9.Gsu3nKjdCFKlBm4olstovJiWa2YjZaDoapWeGVJEYIY
+  ~callbackUrl: 
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
