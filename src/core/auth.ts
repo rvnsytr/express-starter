@@ -40,31 +40,22 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
-    // sendResetPassword: async ({ user, url, token }) => {
-    //   novu.trigger({
-    //     to: {
-    //       subscriberId: "subscriber_unique_identifier",
-    //       firstName: "Albert",
-    //       lastName: "Einstein",
-    //       email: "albert@einstein.com",
-    //       phone: "+1234567890",
-    //     },
-    //     workflowId: "workflow_identifier",
-    //     payload: {
-    //       comment_id: "string",
-    //       post: {
-    //         text: "string",
-    //       },
-    //     },
-    //   });
-    // },
+    sendResetPassword: async ({ user, token }) => {
+      const { name, email } = user;
+      const url = `${appMeta.cors.origin}/reset-password?token=${token}`;
+      void novu.trigger("purnaku-reset-password", {
+        to: { subscriberId: email, email },
+        payload: { name, url },
+      });
+    },
   },
+
   emailVerification: {
     sendOnSignUp: true,
     sendVerificationEmail: async ({ user, token }) => {
       const { name, email } = user;
       const url = `${appMeta.cors.origin}/verify-user?token=${token}`;
-      await novu.trigger("purnaku-verification", {
+      void novu.trigger("purnaku-verification", {
         to: { subscriberId: email, email },
         payload: { name, url },
       });
