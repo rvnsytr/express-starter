@@ -7,6 +7,9 @@
     "**/core/schema.zod.ts": true
   },
 
+  "files.watcherExclude": { "**/bruno/**": true },
+  "search.exclude": { "**/bruno/**": true },
+
   "typescript.preferences.importModuleSpecifier": "shortest",
   "javascript.preferences.importModuleSpecifier": "shortest"
 }

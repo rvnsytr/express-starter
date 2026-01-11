@@ -54,7 +54,7 @@ CREATE INDEX session_user_id_idx ON [session] (user_id);
 CREATE INDEX account_user_id_idx ON [account] (user_id);
 CREATE INDEX verification_identifier_idx ON [verification] (identifier);
 
-CREATE TABLE storage (
+CREATE TABLE [storage] (
     id UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID() PRIMARY KEY,
 
     file_name NVARCHAR(255) NOT NULL,
