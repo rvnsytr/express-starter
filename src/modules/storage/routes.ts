@@ -79,13 +79,13 @@ router.post(
   authorize({ storage: ["create"] }),
   multer().any(),
   async (req, res) => {
-    const { data, error } = await uploadFiles(req, {
+    const upload = await uploadFiles(req, {
       overwriteByQuery: true,
       min: 1,
       // disabled: true,
     });
-    if (error) return res.api({ code: 400, message: error });
-    return res.api({ data });
+    if (!upload.success) return res.api({ code: 400, message: upload.error });
+    return res.api({ data: upload.data });
   },
 );
 

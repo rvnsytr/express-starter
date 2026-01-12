@@ -64,9 +64,9 @@ CREATE TABLE [storage] (
     file_size BIGINT NOT NULL,
 
     deleted_by NVARCHAR(36) NULL,
-    deleted_at DATETIMEOFFSET NULL DEFAULT NULL,
+    deleted_at DATETIMEOFFSET NULL,
     updated_by NVARCHAR(36) NULL,
-    updated_at DATETIMEOFFSET NULL DEFAULT NULL,
+    updated_at DATETIMEOFFSET NULL,
     created_by NVARCHAR(36) NOT NULL,
     created_at DATETIMEOFFSET NOT NULL DEFAULT SYSDATETIMEOFFSET(),
 

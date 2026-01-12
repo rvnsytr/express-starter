@@ -1,7 +1,7 @@
 export type ActionResponse<TData> =
   | {
       success: true;
-      count: { total: number } & Record<string, number>;
+      count?: { total: number } & Record<string, number>;
       data: TData;
     }
   | { success: false; error: string };

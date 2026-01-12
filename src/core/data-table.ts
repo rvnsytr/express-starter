@@ -31,7 +31,7 @@ type WithDataTable<DB, TB extends keyof DB, O> = {
   };
 };
 
-export const defineWDT = <DB, TB extends keyof DB, O>(
+export const defineWDTConfig = <DB, TB extends keyof DB, O>(
   config: WithDataTable<DB, TB, O>,
 ) => config;
 

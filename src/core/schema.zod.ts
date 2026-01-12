@@ -27,7 +27,7 @@ export const sharedSchemas = {
     const max = options?.max;
     const sanitize = options?.sanitize ?? true;
 
-    let schema = z.string({ error: invalid(field) }).trim();
+    let schema = z.coerce.string({ error: invalid(field) }).trim();
 
     if (sanitize)
       schema = schema.regex(/^$|[A-Za-z0-9]/, { message: required(field) });
@@ -195,15 +195,18 @@ export const sharedSchemas = {
     { error: "Pilih rentang tanggal yang valid." },
   ),
 
-  jsonString: <T extends z.ZodTypeAny>(schema: T) =>
+  jsonString: <T>(schema: z.ZodType<T>) =>
     z
       .string()
-      .transform((str) => {
-        try {
-          return JSON.parse(str);
-        } catch {
-          throw new Error(messages.invalid("JSON"));
+      .transform((val) => {
+        if (typeof val === "string") {
+          try {
+            return JSON.parse(val);
+          } catch {
+            throw new Error(messages.invalid("JSON"));
+          }
         }
+        return val;
       })
       .pipe(schema),
 
@@ -287,23 +290,6 @@ export const dataTableSchema = z
   });
 
 // #endregion
-
-export const storageTableSchema = z.object({
-  id: z.uuidv4(),
-
-  file_name: sharedSchemas.string("Nama file", { min: 1, max: 255 }),
-  category: z.enum(["image"]),
-  file_path: sharedSchemas.string("File path", { min: 1, max: 500 }),
-  mime_type: sharedSchemas.string("Tipe file", { max: 100 }),
-  file_size: sharedSchemas.number("Ukuran file"),
-
-  deleted_at: sharedSchemas.deletedAt,
-  deleted_by: sharedSchemas.deletedBy,
-  updated_at: sharedSchemas.updatedAt,
-  updated_by: sharedSchemas.updatedBy,
-  created_at: sharedSchemas.createdAt,
-  created_by: sharedSchemas.createdBy,
-});
 
 export const userSchema = betterAuthUserSchema.extend({
   email: sharedSchemas.email,
@@ -395,3 +381,20 @@ export const verificationTableSchema = betterAuthVerificationSchema.transform(
     updated_at: updatedAt,
   }),
 );
+
+export const storageTableSchema = z.object({
+  id: z.uuidv4(),
+
+  file_name: sharedSchemas.string("Nama file", { min: 1, max: 255 }),
+  category: z.enum(["image"]),
+  file_path: sharedSchemas.string("File path", { min: 1, max: 500 }),
+  mime_type: sharedSchemas.string("Tipe file", { max: 100 }),
+  file_size: sharedSchemas.number("Ukuran file"),
+
+  deleted_at: sharedSchemas.deletedAt,
+  deleted_by: sharedSchemas.deletedBy,
+  updated_at: sharedSchemas.updatedAt,
+  updated_by: sharedSchemas.updatedBy,
+  created_at: sharedSchemas.createdAt,
+  created_by: sharedSchemas.createdBy,
+});

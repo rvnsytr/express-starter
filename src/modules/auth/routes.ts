@@ -1,5 +1,5 @@
 import { auth } from "@/core/auth";
-import { defineWDT, withDataTable } from "@/core/data-table";
+import { defineWDTConfig, withDataTable } from "@/core/data-table";
 import { db } from "@/core/db";
 import { authorize } from "@/core/middlewares";
 import { dataTableSchema } from "@/core/schema.zod";
@@ -44,7 +44,7 @@ router.post(
     if (!bodyParsed.success)
       return res.api({ code: 400, message: formatZodError(bodyParsed.error) });
 
-    const dataDef = defineWDT({
+    const dataDef = defineWDTConfig({
       queryBuilder: dataQb,
       config: {
         columns: {

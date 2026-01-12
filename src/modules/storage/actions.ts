@@ -1,4 +1,4 @@
-import { fileMeta, FileType } from "@/core/constants";
+import { ActionResponse, fileMeta, FileType } from "@/core/constants";
 import { db } from "@/core/db";
 import { Database, StorageTable } from "@/core/schema.db";
 import { sharedSchemas, storageTableSchema } from "@/core/schema.zod";
@@ -18,6 +18,16 @@ const s3 = new Client({
   accessKey: process.env.AWS_ACCESS_KEY_ID!,
   secretKey: process.env.AWS_SECRET_ACCESS_KEY!,
 });
+
+type UploadFilesData = {
+  id: string;
+  fileName: string;
+  category: StorageTable["category"];
+  filePath: string;
+  mimeType: string;
+  fileSize: number;
+  fileUrl?: string;
+}[];
 
 export type UploadFilesOptions = {
   type?: FileType;
@@ -42,7 +52,10 @@ export type RemoveFilesOptions = {
   disabled?: boolean;
 };
 
-export async function uploadFiles(req: Request, options?: UploadFilesOptions) {
+export async function uploadFiles(
+  req: Request,
+  options?: UploadFilesOptions,
+): Promise<ActionResponse<UploadFilesData>> {
   try {
     const type = options?.type ?? "file";
 
@@ -138,18 +151,18 @@ export async function uploadFiles(req: Request, options?: UploadFilesOptions) {
           filePath,
           mimeType,
           fileSize,
-          fileUrl,
+          ...(fileUrl ? { fileUrl } : {}),
         };
       }),
     );
 
-    return { data, error: null };
+    return { success: true, data };
   } catch (e) {
     const error =
       e instanceof Error
         ? e.message
         : "Terjadi kesalahan saat mengunggah file.";
-    return { data: null, error };
+    return { success: false, error };
   }
 }
 
