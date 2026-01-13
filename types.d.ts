@@ -11,7 +11,7 @@ declare global {
     }
 
     interface Response {
-      api: <T>(payload: Partial<ApiResponse<T>>) => void;
+      api: <T>(payload?: Partial<ApiResponse<T>>) => void;
     }
   }
 }

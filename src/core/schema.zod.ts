@@ -6,12 +6,9 @@ import {
   verificationSchema as betterAuthVerificationSchema,
 } from "better-auth";
 import z from "zod";
-import { id } from "zod/locales";
 import { allGenders, fileMeta, FileType, messages } from "./constants";
 import { allFilterOperators } from "./constants/filter";
 import { toMegabytes } from "./utils";
-
-z.config(id());
 
 // #region CORE
 
@@ -27,7 +24,7 @@ export const sharedSchemas = {
     const max = options?.max;
     const sanitize = options?.sanitize ?? true;
 
-    let schema = z.coerce.string({ error: invalid(field) }).trim();
+    let schema = z.string({ error: invalid(field) }).trim();
 
     if (sanitize)
       schema = schema.regex(/^$|[A-Za-z0-9]/, { message: required(field) });

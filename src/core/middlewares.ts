@@ -17,14 +17,14 @@ export const init: RequestHandler = (_req, res, next) => {
   const nodeEnv = process.env.NODE_ENV ?? "local";
   const isShowError = nodeEnv === "local" || nodeEnv === "development";
 
-  res.api = <T>(payload: Partial<ApiResponse<T>>) => {
-    const code = payload.code ?? 200;
+  res.api = <T>(payload?: Partial<ApiResponse<T>>) => {
+    const code = payload?.code ?? 200;
     const success = code >= 200 && code < 300;
-    const count = payload.count ?? undefined;
-    const data = payload.data ?? null;
+    const count = payload?.count ?? undefined;
+    const data = payload?.data ?? null;
     const message =
-      payload.message ?? (success ? messages.success : messages.error);
-    const error = isShowError ? payload.error : undefined;
+      payload?.message ?? (success ? messages.success : messages.error);
+    const error = isShowError ? payload?.error : undefined;
     return res
       .status(code)
       .json({ code, success, message, count, data, error });
