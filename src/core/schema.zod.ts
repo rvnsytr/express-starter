@@ -64,6 +64,23 @@ export const sharedSchemas = {
     return schema;
   },
 
+  boolean: (field: string) =>
+    z
+      .union(
+        [
+          z.boolean(),
+          z.literal("true"),
+          z.literal("false"),
+          z.literal("1"),
+          z.literal("0"),
+        ],
+        { error: messages.invalid(field) },
+      )
+      .transform((v) => {
+        if (typeof v === "boolean") return v;
+        return v === "true" || v === "1";
+      }),
+
   files: (
     type: FileType,
     options?: {
@@ -195,15 +212,15 @@ export const sharedSchemas = {
   jsonString: <T>(schema: z.ZodType<T>) =>
     z
       .string()
-      .transform((val) => {
-        if (typeof val === "string") {
+      .transform((v) => {
+        if (typeof v === "string") {
           try {
-            return JSON.parse(val);
+            return JSON.parse(v);
           } catch {
             throw new Error(messages.invalid("JSON"));
           }
         }
-        return val;
+        return v;
       })
       .pipe(schema),
 
@@ -225,25 +242,6 @@ export const sharedSchemas = {
     .regex(/[^A-Za-z0-9]/, { error: messages.password.character }),
 
   gender: z.enum(allGenders),
-
-  deletedAt: z.coerce
-    .date({ error: "Field 'deletedAt' tidak valid." })
-    .nullable()
-    .default(null),
-  deletedBy: z
-    .string({ error: "Field 'deletedBy' tidak valid." })
-    .nullable()
-    .default(null),
-  updatedAt: z.coerce
-    .date({ error: "Field 'updatedAt' tidak valid." })
-    .nullable()
-    .default(null),
-  updatedBy: z
-    .string({ error: "Field 'updatedBy' tidak valid." })
-    .nullable()
-    .default(null),
-  createdAt: z.coerce.date({ error: "Field 'createdAt' tidak valid." }),
-  createdBy: z.string({ error: "Field 'createdBy' tidak valid." }),
 };
 
 export const apiResponseSchema = z.object({
@@ -388,10 +386,10 @@ export const storageTableSchema = z.object({
   mime_type: sharedSchemas.string("Tipe file", { max: 100 }),
   file_size: sharedSchemas.number("Ukuran file"),
 
-  deleted_at: sharedSchemas.deletedAt,
-  deleted_by: sharedSchemas.deletedBy,
-  updated_at: sharedSchemas.updatedAt,
-  updated_by: sharedSchemas.updatedBy,
-  created_at: sharedSchemas.createdAt,
-  created_by: sharedSchemas.createdBy,
+  deleted_at: sharedSchemas.date("deleted_at").nullable().default(null),
+  deleted_by: sharedSchemas.string("deleted_by").nullable().default(null),
+  updated_at: sharedSchemas.date("updated_at").nullable().default(null),
+  updated_by: sharedSchemas.string("updated_by").nullable().default(null),
+  created_at: sharedSchemas.date("created_at"),
+  created_by: sharedSchemas.string("created_by"),
 });

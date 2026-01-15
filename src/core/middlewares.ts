@@ -50,7 +50,7 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
   return res.api({ code: 500, error: err?.message });
 };
 
-export function authorize(permissions: Permissions): RequestHandler {
+export function authorize(permissions?: Permissions): RequestHandler {
   return async (req, res, next) => {
     const headers = fromNodeHeaders(req.headers);
     const session = await auth.api.getSession({ headers });

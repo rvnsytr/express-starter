@@ -15,28 +15,27 @@ router.post(
   authorize({ user: ["list"] }),
   json(),
   async (req, res) => {
-    const countQb = db
+    const baseQb = db
       .selectFrom("user as u")
-      .leftJoin("storage as s", "u.image", "s.id")
-      .select(() => [
-        sql<number>`COUNT(u.id)`.as("total"),
-        sql<number>`COALESCE(SUM(CASE WHEN u.role = 'user' THEN 1 ELSE 0 END), 0)`.as(
-          "user",
-        ),
-        sql<number>`COALESCE(SUM(CASE WHEN u.role = 'admin' THEN 1 ELSE 0 END), 0)`.as(
-          "admin",
-        ),
-        sql<number>`COALESCE(SUM(CASE WHEN u.banned = 1 THEN 1 ELSE 0 END), 0)`.as(
-          "banned",
-        ),
-        sql<number>`COALESCE(SUM(CASE WHEN u.banned = 0 THEN 1 ELSE 0 END), 0)`.as(
-          "active",
-        ),
-      ]);
+      .leftJoin("storage as s", "u.image", "s.id");
 
-    const dataQb = db
-      .selectFrom("user as u")
-      .leftJoin("storage as s", "u.image", "s.id")
+    const countQb = baseQb.select(() => [
+      sql<number>`COUNT(u.id)`.as("total"),
+      sql<number>`COALESCE(SUM(CASE WHEN u.role = 'user' THEN 1 ELSE 0 END), 0)`.as(
+        "user",
+      ),
+      sql<number>`COALESCE(SUM(CASE WHEN u.role = 'admin' THEN 1 ELSE 0 END), 0)`.as(
+        "admin",
+      ),
+      sql<number>`COALESCE(SUM(CASE WHEN u.banned = 1 THEN 1 ELSE 0 END), 0)`.as(
+        "banned",
+      ),
+      sql<number>`COALESCE(SUM(CASE WHEN u.banned = 0 THEN 1 ELSE 0 END), 0)`.as(
+        "active",
+      ),
+    ]);
+
+    const dataQb = baseQb
       .selectAll("u")
       .select(["s.id as file_id", "s.file_path"]);
 
