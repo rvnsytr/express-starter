@@ -8,13 +8,13 @@
   },
   "dependencies": {
     "@novu/node": "^2.6.6",
-    "better-auth": "^1.4.12",
+    "better-auth": "^1.4.15",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
-    "kysely": "^0.28.9",
+    "kysely": "^0.28.10",
     "minio": "^8.0.6",
     "multer": "^2.0.2",
     "tarn": "^3.0.2",
@@ -26,7 +26,7 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/multer": "^2.0.0",
-    "@types/node": "^24.10.8",
+    "@types/node": "^24.10.9",
     "eslint": "^9.39.2",
     "globals": "^16.5.0",
     "nodemon": "^3.1.11",
@@ -34,6 +34,6 @@
     "prettier-plugin-organize-imports": "^4.3.0",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.53.0"
+    "typescript-eslint": "^8.53.1"
   }
 }
