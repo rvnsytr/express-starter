@@ -3,7 +3,7 @@ import { defineWDTConfig, withDataTable } from "@/core/data-table";
 import { db } from "@/core/db";
 import { authorize } from "@/core/middlewares";
 import { dataTableSchema } from "@/core/schema.zod";
-import { camelizeKeys, formatZodError } from "@/core/utils";
+import { formatZodError, transformKeys } from "@/core/utils";
 import { toNodeHandler } from "better-auth/node";
 import { json, Router } from "express";
 import { sql } from "kysely";
@@ -69,7 +69,7 @@ router.post(
 
     const data = await withDataTable(bodyParsed.data, dataDef).execute();
 
-    return res.api({ count, data: camelizeKeys(data) });
+    return res.api({ count, data: transformKeys(data, "camel") });
   },
 );
 

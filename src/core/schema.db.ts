@@ -1,7 +1,8 @@
 // Docs: https://www.kysely.dev/docs/getting-started
 
-import { ColumnType, Selectable } from "kysely";
+import { ColumnType, Generated, Selectable } from "kysely";
 import z from "zod";
+import { Override } from "./constants";
 import {
   accountTableSchema,
   sessionTableSchema,
@@ -10,26 +11,47 @@ import {
   verificationTableSchema,
 } from "./schema.zod";
 
-// type WithId<T> = Omit<T, "id"> & {
-//   id: ColumnType<string, never, never>;
-// };
-
-// type WithCreatedAt<T> = Omit<T, "created_at"> & {
-//   created_at: ColumnType<Date, never, Date>;
-// };
-
-type WithUCAudit<T> = Omit<T, "updated_at" | "created_at"> & {
-  updated_at: ColumnType<Date, never, Date>;
-  created_at: ColumnType<Date, never, never>;
-};
-
 export type Database = {
-  user: WithUCAudit<z.infer<typeof userTableSchema>>;
-  account: WithUCAudit<z.infer<typeof accountTableSchema>>;
-  session: WithUCAudit<z.infer<typeof sessionTableSchema>>;
-  verification: WithUCAudit<z.infer<typeof verificationTableSchema>>;
+  user: Override<
+    z.infer<typeof userTableSchema>,
+    {
+      banned: ColumnType<boolean, never, boolean>;
+      updated_at: ColumnType<Date, never, Date>;
+      created_at: Generated<Date>;
+    }
+  >;
 
-  storage: WithUCAudit<z.infer<typeof storageTableSchema>>;
+  account: Override<
+    z.infer<typeof accountTableSchema>,
+    {
+      updated_at: ColumnType<Date, never, Date>;
+      created_at: Generated<Date>;
+    }
+  >;
+
+  session: Override<
+    z.infer<typeof sessionTableSchema>,
+    {
+      updated_at: ColumnType<Date, never, Date>;
+      created_at: Generated<Date>;
+    }
+  >;
+
+  verification: Override<
+    z.infer<typeof verificationTableSchema>,
+    {
+      updated_at: ColumnType<Date, never, Date>;
+      created_at: Generated<Date>;
+    }
+  >;
+
+  storage: Override<
+    z.infer<typeof storageTableSchema>,
+    {
+      updated_at: ColumnType<Date, never, Date>;
+      created_at: Generated<Date>;
+    }
+  >;
 };
 
 export type StorageTable = Selectable<Database["storage"]>;

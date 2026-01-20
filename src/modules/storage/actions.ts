@@ -156,7 +156,7 @@ export async function uploadFiles(
       }),
     );
 
-    return { success: true, data };
+    return { success: true, count: { total: data.length }, data };
   } catch (e) {
     const error =
       e instanceof Error

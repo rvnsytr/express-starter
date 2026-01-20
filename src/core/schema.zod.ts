@@ -8,7 +8,7 @@ import {
 import z from "zod";
 import { allGenders, fileMeta, FileType, messages } from "./constants";
 import { allFilterOperators } from "./constants/filter";
-import { toMegabytes } from "./utils";
+import { toMegabytes, transformKeys } from "./utils";
 
 // #region CORE
 
@@ -291,90 +291,29 @@ export const userSchema = betterAuthUserSchema.extend({
   name: sharedSchemas.string("Nama", { min: 1 }),
   image: z.string().optional().nullable(),
   role: z.lazy(() => z.enum(allRoles)),
-  banned: z.boolean().optional().nullable(),
+  banned: z.boolean().default(false),
   banReason: z.string().optional().nullable(),
   banExpires: z.date().optional().nullable(),
 });
 
-export const userTableSchema = userSchema.transform(
-  ({
-    emailVerified,
-    createdAt,
-    updatedAt,
-    banReason,
-    banExpires,
-    ...rest
-  }) => ({
-    ...rest,
-    email_verified: emailVerified,
-    created_at: createdAt,
-    updated_at: updatedAt,
-    ban_reason: banReason,
-    ban_expires: banExpires,
-  }),
+export const userTableSchema = userSchema.transform((v) =>
+  transformKeys(v, "snake"),
 );
 
-export const accountTableSchema = betterAuthAccountSchema.transform(
-  ({
-    accountId,
-    providerId,
-    userId,
-    accessToken,
-    refreshToken,
-    idToken,
-    accessTokenExpiresAt,
-    refreshTokenExpiresAt,
-    createdAt,
-    updatedAt,
-    ...rest
-  }) => ({
-    ...rest,
-    account_id: accountId,
-    provider_id: providerId,
-    user_id: userId,
-    access_token: accessToken,
-    refresh_token: refreshToken,
-    id_token: idToken,
-    access_token_expires_at: accessTokenExpiresAt,
-    refresh_token_expires_at: refreshTokenExpiresAt,
-    created_at: createdAt,
-    updated_at: updatedAt,
-  }),
+export const accountTableSchema = betterAuthAccountSchema.transform((v) =>
+  transformKeys(v, "snake"),
 );
 
 export const sessionSchema = betterAuthSessionSchema.extend({
   impersonatedBy: z.string().nullable().optional(),
 });
 
-export const sessionTableSchema = sessionSchema.transform(
-  ({
-    expiresAt,
-    createdAt,
-    updatedAt,
-    ipAddress,
-    userAgent,
-    userId,
-    impersonatedBy,
-    ...rest
-  }) => ({
-    ...rest,
-    expires_at: expiresAt,
-    created_at: createdAt,
-    updated_at: updatedAt,
-    ip_address: ipAddress,
-    user_agent: userAgent,
-    user_id: userId,
-    impersonated_by: impersonatedBy,
-  }),
+export const sessionTableSchema = sessionSchema.transform((v) =>
+  transformKeys(v, "snake"),
 );
 
 export const verificationTableSchema = betterAuthVerificationSchema.transform(
-  ({ expiresAt, createdAt, updatedAt, ...rest }) => ({
-    ...rest,
-    expires_at: expiresAt,
-    created_at: createdAt,
-    updated_at: updatedAt,
-  }),
+  (v) => transformKeys(v, "snake"),
 );
 
 export const storageTableSchema = z.object({

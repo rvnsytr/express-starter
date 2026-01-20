@@ -1,5 +1,12 @@
 import { ZodError } from "zod";
-import { appMeta, CamelizeKeys, Language, languageMeta } from "../constants";
+import {
+  appMeta,
+  Language,
+  languageMeta,
+  StringCase,
+  TransformableStringCase,
+  TransformKeys,
+} from "../constants";
 
 export function capitalize(string: string, mode: "all" | "first" = "all") {
   const handler = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -40,14 +47,11 @@ export function normalizeString(str: string) {
     .replace(/\s+/g, " ");
 }
 
-export function toCase(
-  str: string,
-  mode: "slug" | "snake" | "camel" | "pascal" | "constant" | "title",
-) {
+export function toCase(str: string, mode: StringCase) {
   const base = normalizeString(str);
 
   switch (mode) {
-    case "slug":
+    case "kebab":
       return base.replace(/\s/g, "-");
     case "snake":
       return base.replace(/\s/g, "_");
@@ -65,29 +69,33 @@ export function toCase(
 }
 
 export function fromCase(str: string) {
-  return str.trim().replace(/[-_]/g, " ");
+  return str
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/[-_]/g, " ")
+    .trim();
 }
 
-export function camelizeKeys<T>(value: T): CamelizeKeys<T> {
-  if (typeof value === "string")
-    return toCase(value, "camel") as CamelizeKeys<T>;
+export function transformKeys<T, C extends TransformableStringCase>(
+  value: T,
+  keyCase: C,
+): TransformKeys<T, C> {
+  const transform = (val: unknown): unknown => {
+    if (Array.isArray(val)) return val.map(transform);
 
-  if (
-    value === null ||
-    typeof value !== "object" ||
-    value instanceof Date ||
-    value instanceof RegExp
-  )
-    return value as CamelizeKeys<T>;
+    if (
+      val === null ||
+      typeof val !== "object" ||
+      val instanceof Date ||
+      val instanceof RegExp
+    )
+      return val;
 
-  if (Array.isArray(value)) return value.map(camelizeKeys) as CamelizeKeys<T>;
+    return Object.fromEntries(
+      Object.entries(val).map(([k, v]) => [toCase(k, keyCase), transform(v)]),
+    );
+  };
 
-  return Object.fromEntries(
-    Object.entries(value).map(([k, v]) => [
-      toCase(k, "camel"),
-      camelizeKeys(v),
-    ]),
-  ) as CamelizeKeys<T>;
+  return transform(value) as TransformKeys<T, C>;
 }
 
 export function formatNumber(

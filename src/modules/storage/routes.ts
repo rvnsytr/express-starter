@@ -1,7 +1,7 @@
 import { db } from "@/core/db";
 import { authorize } from "@/core/middlewares";
 import { storageTableSchema } from "@/core/schema.zod";
-import { camelizeKeys, formatZodError } from "@/core/utils";
+import { formatZodError, transformKeys } from "@/core/utils";
 import { Router } from "express";
 import multer from "multer";
 import z from "zod";
@@ -37,7 +37,7 @@ router.get("/", authorize({ storage: ["list"] }), async (req, res) => {
     );
   }
 
-  return res.api({ data: camelizeKeys(result) });
+  return res.api({ data: transformKeys(result, "camel") });
 });
 
 router.post(
@@ -85,7 +85,7 @@ router.post(
       // disabled: true,
     });
     if (!upload.success) return res.api({ code: 400, message: upload.error });
-    return res.api({ data: upload.data });
+    return res.api(upload);
   },
 );
 
