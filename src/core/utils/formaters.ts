@@ -1,11 +1,5 @@
 import { ZodError } from "zod";
-import {
-  appMeta,
-  Camelize,
-  Language,
-  languageMeta,
-  StringCase,
-} from "../constants";
+import { appMeta, CamelizeKeys, Language, languageMeta } from "../constants";
 
 export function capitalize(string: string, mode: "all" | "first" = "all") {
   const handler = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -46,7 +40,10 @@ export function normalizeString(str: string) {
     .replace(/\s+/g, " ");
 }
 
-export function toCase(str: string, mode: StringCase) {
+export function toCase(
+  str: string,
+  mode: "slug" | "snake" | "camel" | "pascal" | "constant" | "title",
+) {
   const base = normalizeString(str);
 
   switch (mode) {
@@ -55,7 +52,7 @@ export function toCase(str: string, mode: StringCase) {
     case "snake":
       return base.replace(/\s/g, "_");
     case "camel":
-      return base.replace(/ (\w)/g, (_, c) => c.toUpperCase());
+      return base.replace(/[_.-](\w|$)/g, (_, c) => c.toUpperCase());
     case "pascal":
       return base.replace(/(^\w| \w)/g, (m) => m.trim().toUpperCase());
     case "constant":
@@ -71,16 +68,26 @@ export function fromCase(str: string) {
   return str.trim().replace(/[-_]/g, " ");
 }
 
-export function camelize<T>(value: T): Camelize<T> {
-  if (Array.isArray(value)) return value.map(camelize) as Camelize<T>;
+export function camelizeKeys<T>(value: T): CamelizeKeys<T> {
+  if (typeof value === "string")
+    return toCase(value, "camel") as CamelizeKeys<T>;
 
-  if (value && typeof value === "object" && !(value instanceof Date)) {
-    return Object.fromEntries(
-      Object.entries(value).map(([k, v]) => [toCase(k, "camel"), camelize(v)]),
-    ) as Camelize<T>;
-  }
+  if (
+    value === null ||
+    typeof value !== "object" ||
+    value instanceof Date ||
+    value instanceof RegExp
+  )
+    return value as CamelizeKeys<T>;
 
-  return value as Camelize<T>;
+  if (Array.isArray(value)) return value.map(camelizeKeys) as CamelizeKeys<T>;
+
+  return Object.fromEntries(
+    Object.entries(value).map(([k, v]) => [
+      toCase(k, "camel"),
+      camelizeKeys(v),
+    ]),
+  ) as CamelizeKeys<T>;
 }
 
 export function formatNumber(

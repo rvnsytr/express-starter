@@ -1,33 +1,17 @@
-export type ActionResponse<TData> =
-  | {
-      success: true;
-      count?: { total: number } & Record<string, number>;
-      data: TData;
-    }
-  | { success: false; error: string };
-
-export type StringCase =
-  | "slug"
-  | "snake"
-  | "camel"
-  | "pascal"
-  | "constant"
-  | "title";
+export type ActionResponse<TData> = {
+  count?: { total: number } & Record<string, number>;
+} & ({ success: true; data: TData } | { success: false; error: string });
 
 export type SnakeToCamel<S extends string> = S extends `${infer H}_${infer T}`
   ? `${H}${Capitalize<SnakeToCamel<T>>}`
   : S;
 
-export type Camelize<T> = T extends readonly (infer U)[]
-  ? readonly Camelize<U>[]
-  : T extends (infer U)[]
-    ? Camelize<U>[]
+export type CamelizeKeys<T> = T extends readonly (infer U)[]
+  ? CamelizeKeys<U>[]
+  : T extends Date
+    ? T
     : T extends object
-      ? {
-          [K in keyof T as K extends string ? SnakeToCamel<K> : K]: Camelize<
-            T[K]
-          >;
-        }
+      ? { [K in keyof T as SnakeToCamel<K & string>]: CamelizeKeys<T[K]> }
       : T;
 
 export const allRequestMetaKey = [

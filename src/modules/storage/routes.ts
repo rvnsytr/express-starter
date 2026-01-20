@@ -1,7 +1,7 @@
 import { db } from "@/core/db";
 import { authorize } from "@/core/middlewares";
 import { storageTableSchema } from "@/core/schema.zod";
-import { camelize, formatZodError } from "@/core/utils";
+import { camelizeKeys, formatZodError } from "@/core/utils";
 import { Router } from "express";
 import multer from "multer";
 import z from "zod";
@@ -37,7 +37,7 @@ router.get("/", authorize({ storage: ["list"] }), async (req, res) => {
     );
   }
 
-  return res.api({ data: camelize(result) });
+  return res.api({ data: camelizeKeys(result) });
 });
 
 router.post(
