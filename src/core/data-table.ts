@@ -11,15 +11,13 @@ import { dataTableSchema } from "./schema.zod";
 
 type DataTableState = z.infer<typeof dataTableSchema>;
 
-type ConfigParserValue = string | number | Date;
-
 type WDTColumnConfig<DB, TB extends keyof DB> = {
   column: ReferenceExpression<DB, TB>;
 } & (
-  | { type: "string"; parser?: (value: ConfigParserValue) => string }
-  | { type: "number"; parser?: (value: ConfigParserValue) => number }
-  | { type: "date"; parser?: (value: ConfigParserValue) => Date }
-  | { type: "boolean"; parser: (value: ConfigParserValue) => boolean }
+  | { type: "string"; parser?: (value: string | number | Date) => string }
+  | { type: "number"; parser?: (value: string | number | Date) => number }
+  | { type: "date"; parser?: (value: string | number | Date) => Date }
+  | { type: "boolean"; parser: (value: string | number | Date) => boolean }
 );
 
 type WithDataTable<DB, TB extends keyof DB, O> = {
@@ -104,7 +102,7 @@ export function withDataTable<DB, TB extends keyof DB, O>(
         if (!columnConfig || !values.length) return;
 
         const { column, type, parser } = columnConfig;
-        let parsedValues: (string | number | boolean | Date)[] = values;
+        let parsedValues: (string | number | Date | boolean)[] = values;
 
         if (type === "date")
           parsedValues = values
