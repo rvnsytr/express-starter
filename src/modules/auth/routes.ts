@@ -35,16 +35,12 @@ router.post(
       ),
     ]);
 
-    const dataQb = baseQb
-      .selectAll("u")
-      .select(["s.id as file_id", "s.file_path"]);
-
     const bodyParsed = dataTableSchema.safeParse(req.body);
     if (!bodyParsed.success)
       return res.api({ code: 400, message: formatZodError(bodyParsed.error) });
 
     const dataDef = defineWDTConfig({
-      queryBuilder: dataQb,
+      queryBuilder: baseQb.selectAll("u"),
       config: {
         columns: {
           name: { column: "u.name", type: "string" },
