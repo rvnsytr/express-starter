@@ -3,11 +3,11 @@ import "dotenv/config";
 import express from "express";
 import z from "zod";
 import { id } from "zod/locales";
-import { appMeta } from "./core/constants";
+import { appMeta } from "./core/constants/app";
 import { errorHandler, init, notFoundHandler } from "./core/middlewares";
 
-import { router as authRoutes } from "./modules/auth";
-import { router as storageRoutes } from "./modules/storage";
+import { router as authRoutes } from "./modules/auth/routes";
+import { router as storageRoutes } from "./modules/storage/routes";
 
 const app = express();
 const port = process.env.PORT ?? 8000;

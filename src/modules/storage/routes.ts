@@ -1,7 +1,7 @@
 import { db } from "@/core/db";
 import { authorize } from "@/core/middlewares";
 import { storageTableSchema } from "@/core/schema.zod";
-import { formatZodError, transformKeys } from "@/core/utils";
+import { formatZodError, transformKeys } from "@/core/utils/formaters";
 import { Router } from "express";
 import multer from "multer";
 import z from "zod";

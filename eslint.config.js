@@ -22,6 +22,7 @@ export default defineConfig([
     },
     rules: {
       "@typescript-eslint/consistent-type-definitions": "off",
+      "no-extra-boolean-cast": "off",
     },
   },
 ]);

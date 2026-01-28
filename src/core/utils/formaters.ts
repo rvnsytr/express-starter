@@ -1,12 +1,11 @@
 import { ZodError } from "zod";
+import { appMeta } from "../constants/app";
+import { Language, languageMeta } from "../constants/metadata";
 import {
-  appMeta,
-  Language,
-  languageMeta,
   StringCase,
   TransformableStringCase,
   TransformKeys,
-} from "../constants";
+} from "../constants/types";
 
 export function capitalize(string: string, mode: "all" | "first" = "all") {
   const handler = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -124,6 +123,11 @@ export function formatPhone(number: string | number, prefix?: "+62" | "0") {
   return `${prefix ?? ""} ${formatted}`.trim();
 }
 
-export function formatZodError<T>(zodError: ZodError<T>): string {
-  return JSON.parse(zodError.message)[0].message;
+export function formatZodError<T>(
+  zodError: ZodError<T>,
+  withPath = false,
+): string {
+  const error = JSON.parse(zodError.message)[0];
+  if (withPath) return `${error.path}: ${error.message}`;
+  return error.message;
 }

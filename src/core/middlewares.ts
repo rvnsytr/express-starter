@@ -1,14 +1,16 @@
 import { APIError } from "better-auth";
 import { fromNodeHeaders } from "better-auth/node";
 import { ErrorRequestHandler, RequestHandler } from "express";
-import z from "zod";
 import { auth } from "./auth";
-import { messages } from "./constants";
+import { messages } from "./constants/messages";
 import { Permissions } from "./permission";
-import { apiResponseSchema } from "./schema.zod";
-import { delay } from "./utils";
+import { delay } from "./utils/helpers";
 
-export type ApiResponse<T> = z.infer<typeof apiResponseSchema> & {
+export type ApiResponse<T> = {
+  code: number;
+  success: boolean;
+  message: string;
+  count?: ({ total: number } & Record<string, number>) | undefined;
   data: T;
   error?: unknown;
 };
@@ -22,8 +24,7 @@ export const init: RequestHandler = (_req, res, next) => {
     const success = code >= 200 && code < 300;
     const count = payload?.count ?? undefined;
     const data = payload?.data ?? null;
-    const message =
-      payload?.message ?? (success ? messages.success : messages.error);
+    const message = payload?.message ?? (success ? "Sukses" : messages.error);
     const error = isShowError ? payload?.error : undefined;
     return res
       .status(code)

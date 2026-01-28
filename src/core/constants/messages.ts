@@ -1,11 +1,33 @@
-import { capitalize, formatDate, formatDateDistanceToNow } from "../utils";
+import { formatDate, formatDateDistanceToNow } from "../utils/date";
+import { capitalize } from "../utils/formaters";
 
 export const messages = {
+  actions: {
+    // created: "dibuat",
+    // removed: "dihapus",
+    // updated: "diperbarui",
+    // uploaded: "diunggah",
+
+    action: "Aksi",
+    add: "Tambah",
+    back: "Kembali",
+    cancel: "Batal",
+    clear: "Bersihkan",
+    confirm: "Konfirmasi",
+    remove: "Hapus",
+    reset: "Atur Ulang",
+    save: "Simpan",
+    update: "Simpan Perubahan",
+    upload: "Unggah",
+
+    prev: "Sebelumnya",
+    next: "Selanjutnya",
+  },
+
   loading: "Mohon tunggu sebentar...",
   empty: "Tidak ada hasil yang ditemukan.",
   notFound: "Sumber daya yang diminta tidak ditemukan.",
 
-  success: "Sukses",
   error: "Terjadi kesalahan. Silakan coba lagi nanti.",
 
   unauthorized: "Tindakan tidak terautentikasi",
@@ -20,8 +42,8 @@ export const messages = {
 
   thingAgo: (thing: string, time: Date) =>
     `${capitalize(thing, "first")} ${formatDateDistanceToNow(time)} yang lalu.`,
-  dateAgo: (time: Date) =>
-    `${formatDate(time, "PPPp")} - ${formatDateDistanceToNow(time)} yang lalu.`,
+  dateRelative: (time: Date, mode: "future" | "past" = "past") =>
+    `${formatDate(time, "PPPp")} - ${formatDateDistanceToNow(time)} ${mode === "past" ? "yang lalu" : "dari sekarang"}.`,
 
   // -- Validation
   invalid: (field: string) => `${capitalize(field, "first")} tidak valid.`,

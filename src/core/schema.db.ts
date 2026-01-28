@@ -2,7 +2,7 @@
 
 import { ColumnType, Generated, Selectable } from "kysely";
 import z from "zod";
-import { Override } from "./constants";
+import { Override } from "./constants/types";
 import {
   accountTableSchema,
   sessionTableSchema,

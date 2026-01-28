@@ -6,9 +6,11 @@ import {
   verificationSchema as betterAuthVerificationSchema,
 } from "better-auth";
 import z from "zod";
-import { allGenders, fileMeta, FileType, messages } from "./constants";
+import { fileMeta, FileType } from "./constants/file";
 import { allFilterOperators } from "./constants/filter";
-import { toMegabytes, transformKeys } from "./utils";
+import { messages } from "./constants/messages";
+import { allGenders } from "./constants/metadata";
+import { toMegabytes, transformKeys } from "./utils/formaters";
 
 // #region CORE
 
@@ -205,6 +207,8 @@ export const sharedSchemas = {
       .string()
       .transform((v) => {
         if (typeof v === "string") {
+          if (!v) return undefined;
+
           try {
             return JSON.parse(v);
           } catch {
@@ -234,18 +238,6 @@ export const sharedSchemas = {
 
   gender: z.enum(allGenders),
 };
-
-export const apiResponseSchema = z.object({
-  code: z.number(),
-  success: z.boolean(),
-  message: z.string(),
-  count: z
-    .intersection(
-      z.object({ total: z.number() }),
-      z.record(z.string(), z.number()),
-    )
-    .optional(),
-});
 
 export const dataTableSchema = z
   .object({
