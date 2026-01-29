@@ -82,7 +82,7 @@ export async function uploadFiles(
     const overwriteByQuery = options?.overwriteByQuery ?? false;
     const database = options?.db ?? db;
     const isDisabled = options?.disabled ?? false;
-    const createdBy = userSchema.data;
+    const userId = userSchema.data;
 
     const fileNameOption = overwriteByQuery
       ? (fileNameInQuery ?? options?.fileName)
@@ -108,7 +108,7 @@ export async function uploadFiles(
           throw new Error(message);
         }
 
-        const id = crypto.randomUUID().toUpperCase();
+        let id = crypto.randomUUID().toUpperCase();
         const extension = originalname.split(".").pop();
 
         const now = options?.unique ? Date.now().toString() : "";
@@ -125,18 +125,36 @@ export async function uploadFiles(
         let fileUrl = undefined;
 
         if (!isDisabled) {
-          await database
-            .insertInto("storage")
-            .values({
-              id,
-              file_name: fileName,
-              category: category,
-              file_path: filePath,
-              mime_type: mimeType,
-              file_size: fileSize,
-              created_by: createdBy,
-            })
+          const exists = await database
+            .selectFrom("storage")
+            .select("id")
+            .where("category", "=", "image")
+            .where("file_name", "=", fileName)
             .executeTakeFirst();
+
+          if (exists) {
+            id = exists.id;
+            await database
+              .updateTable("storage")
+              .set("file_size", fileSize)
+              .set("updated_by", userId)
+              .set("updated_at", new Date())
+              .where("id", "=", id)
+              .executeTakeFirst();
+          } else {
+            await database
+              .insertInto("storage")
+              .values({
+                id,
+                file_name: fileName,
+                category: category,
+                file_path: filePath,
+                mime_type: mimeType,
+                file_size: fileSize,
+                created_by: userId,
+              })
+              .executeTakeFirst();
+          }
 
           await s3.putObject(bucket, filePath, buffer, fileSize, {
             "Content-Type": mimeType,
@@ -196,6 +214,14 @@ export async function removeFiles(
     const isDisabled = options?.disabled ?? false;
 
     let count = 0;
+
+    const res = await database
+      .selectFrom("storage")
+      .select(searchBy)
+      .where(searchBy, "in", keys)
+      .execute();
+
+    console.log(res);
 
     if (!isDisabled) {
       const { numUpdatedRows } = await database

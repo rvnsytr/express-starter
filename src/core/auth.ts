@@ -144,21 +144,17 @@ export const auth = betterAuth({
         const { session: sessionData, user: userData } = session;
         if (!userData.image) return ctx.json({ ...session, imageId: null });
 
-        const imageId = userData.image;
-
-        const file = await db
+        const data = await db
           .selectFrom("storage")
           .select("file_path")
-          .where("id", "=", imageId)
+          .where("id", "=", userData.image)
           .executeTakeFirst();
 
-        if (!file) return ctx.json(session);
-        const image = await getPresignedUrl(file.file_path);
+        if (!data) return ctx.json(session);
 
         return ctx.json({
           session: sessionData,
-          user: { ...userData, image },
-          imageId,
+          user: { ...userData, image: await getPresignedUrl(data.file_path) },
         });
       }
 
