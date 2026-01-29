@@ -1,12 +1,16 @@
 import { auth } from "@/core/auth";
-import { defineWDTConfig, withDataTable } from "@/core/data-table";
+import {
+  dataTableSchema,
+  defineWDTConfig,
+  withDataTable,
+} from "@/core/data-table";
 import { db } from "@/core/db";
 import { authorize } from "@/core/middlewares";
-import { dataTableSchema } from "@/core/schema.zod";
 import { formatZodError, transformKeys } from "@/core/utils/formaters";
 import { toNodeHandler } from "better-auth/node";
 import { json, Router } from "express";
 import { sql } from "kysely";
+import { getPresignedUrl } from "../storage/actions";
 
 const router = Router();
 
@@ -40,7 +44,7 @@ router.post(
       return res.api({ code: 400, message: formatZodError(bodyParsed.error) });
 
     const dataDef = defineWDTConfig({
-      queryBuilder: baseQb.selectAll("u"),
+      queryBuilder: baseQb.selectAll("u").select("s.file_path"),
       config: {
         columns: {
           name: { column: "u.name", type: "string" },
@@ -63,7 +67,14 @@ router.post(
       config: { ...dataDef.config, disabled: ["sorting", "pagination"] },
     }).executeTakeFirst();
 
-    const data = await withDataTable(bodyParsed.data, dataDef).execute();
+    const rawData = await withDataTable(bodyParsed.data, dataDef).execute();
+
+    const data = await Promise.all(
+      rawData.map(async ({ file_path, ...rest }) => ({
+        ...rest,
+        image: file_path ? await getPresignedUrl(file_path) : null,
+      })),
+    );
 
     return res.api({ count, data: transformKeys(data, "camel") });
   },

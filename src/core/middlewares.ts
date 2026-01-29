@@ -10,7 +10,7 @@ export type ApiResponse<T> = {
   code: number;
   success: boolean;
   message: string;
-  count?: ({ total: number } & Record<string, number>) | undefined;
+  count: ({ total: number } & Record<string, number>) | undefined;
   data: T;
   error?: unknown;
 };
@@ -22,13 +22,12 @@ export const init: RequestHandler = (_req, res, next) => {
   res.api = <T>(payload?: Partial<ApiResponse<T>>) => {
     const code = payload?.code ?? 200;
     const success = code >= 200 && code < 300;
-    const count = payload?.count ?? undefined;
     const data = payload?.data ?? null;
     const message = payload?.message ?? (success ? "Sukses" : messages.error);
     const error = isShowError ? payload?.error : undefined;
     return res
       .status(code)
-      .json({ code, success, message, count, data, error });
+      .json({ code, success, message, count: payload?.count, data, error });
   };
 
   next();

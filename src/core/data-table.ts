@@ -6,8 +6,7 @@ import {
   SqlBool,
 } from "kysely";
 import z from "zod";
-import { FilterOperators } from "./constants/filter";
-import { dataTableSchema } from "./schema.zod";
+import { allFilterOperators, FilterOperators } from "./constants/filter";
 
 type DataTableState = z.infer<typeof dataTableSchema>;
 
@@ -29,6 +28,34 @@ type WithDataTable<DB, TB extends keyof DB, O> = {
   };
 };
 
+export const dataTableSchema = z
+  .object({
+    globalFilter: z.string().default(""),
+    columnFilters: z
+      .object({
+        id: z.string(),
+        value: z.object({
+          operator: z.enum(allFilterOperators),
+          values: z.union([z.string(), z.number(), z.coerce.date()]).array(),
+        }),
+      })
+      .array()
+      .default([]),
+    sorting: z
+      .object({ id: z.string(), desc: z.boolean() })
+      .array()
+      .default([]),
+    pagination: z
+      .object({ pageIndex: z.number(), pageSize: z.number() })
+      .default({ pageIndex: 0, pageSize: 10 }),
+  })
+  .default({
+    globalFilter: "",
+    columnFilters: [],
+    sorting: [],
+    pagination: { pageIndex: 0, pageSize: 10 },
+  });
+
 export const defineWDTConfig = <DB, TB extends keyof DB, O>(
   config: WithDataTable<DB, TB, O>,
 ) => config;
@@ -40,7 +67,6 @@ export function withDataTable<DB, TB extends keyof DB, O>(
   let qb = definition.queryBuilder;
   const { config } = definition;
 
-  // #region Global Filter
   const columnValues = Object.values(config.columns);
   const globalFilterCols = columnValues.filter((v) => v.type === "string");
 
@@ -56,9 +82,7 @@ export function withDataTable<DB, TB extends keyof DB, O>(
       return eb.or(ors);
     });
   }
-  // #endregion
 
-  // TODO: Column Filters
   if (!config.disabled?.includes("columnFilters") && state.columnFilters) {
     const ilikeOperators: FilterOperators[] = ["contains"];
     const notIlikeOperators: FilterOperators[] = ["does not contain"];
@@ -185,7 +209,6 @@ export function withDataTable<DB, TB extends keyof DB, O>(
     });
   }
 
-  // #region Sorting
   const applySorting = () => {
     if (!config.disabled?.includes("sorting") && state.sorting.length) {
       const isSorted = state.sorting
@@ -205,14 +228,11 @@ export function withDataTable<DB, TB extends keyof DB, O>(
   };
 
   if (!config.disabled?.includes("pagination")) applySorting();
-  // #endregion
 
-  // #region Pagination
   if (!config.disabled?.includes("pagination")) {
     const { pageIndex, pageSize } = state.pagination;
     qb = qb.offset(pageIndex * pageSize).fetch(pageSize);
   }
-  // #endregion
 
   return qb;
 }

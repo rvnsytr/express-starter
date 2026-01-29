@@ -7,7 +7,6 @@ import {
 } from "better-auth";
 import z from "zod";
 import { fileMeta, FileType } from "./constants/file";
-import { allFilterOperators } from "./constants/filter";
 import { messages } from "./constants/messages";
 import { allGenders } from "./constants/metadata";
 import { toMegabytes, transformKeys } from "./utils/formaters";
@@ -239,33 +238,15 @@ export const sharedSchemas = {
   gender: z.enum(allGenders),
 };
 
-export const dataTableSchema = z
-  .object({
-    globalFilter: z.string().default(""),
-    columnFilters: z
-      .object({
-        id: z.string(),
-        value: z.object({
-          operator: z.enum(allFilterOperators),
-          values: z.union([z.string(), z.number(), z.coerce.date()]).array(),
-        }),
-      })
-      .array()
-      .default([]),
-    sorting: z
-      .object({ id: z.string(), desc: z.boolean() })
-      .array()
-      .default([]),
-    pagination: z
-      .object({ pageIndex: z.number(), pageSize: z.number() })
-      .default({ pageIndex: 0, pageSize: 10 }),
-  })
-  .default({
-    globalFilter: "",
-    columnFilters: [],
-    sorting: [],
-    pagination: { pageIndex: 0, pageSize: 10 },
-  });
+export function withSchemaPrefix<P extends string, S extends z.ZodRawShape>(
+  prefix: P,
+  schema: z.ZodObject<S>,
+) {
+  const prefixedShape = Object.fromEntries(
+    Object.entries(schema.shape).map(([k, v]) => [`${prefix}${k}`, v]),
+  ) as { [K in keyof S as `${P}${string & K}`]: S[K] };
+  return z.object(prefixedShape);
+}
 
 // #endregion
 
