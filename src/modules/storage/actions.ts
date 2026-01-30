@@ -128,8 +128,7 @@ export async function uploadFiles(
           const exists = await database
             .selectFrom("storage")
             .select("id")
-            .where("category", "=", "image")
-            .where("file_name", "=", fileName)
+            .where("file_path", "=", filePath)
             .executeTakeFirst();
 
           if (exists) {
@@ -137,6 +136,8 @@ export async function uploadFiles(
             await database
               .updateTable("storage")
               .set("file_size", fileSize)
+              .set("deleted_by", null)
+              .set("deleted_at", null)
               .set("updated_by", userId)
               .set("updated_at", new Date())
               .where("id", "=", id)
