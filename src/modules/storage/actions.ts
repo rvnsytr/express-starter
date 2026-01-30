@@ -60,8 +60,8 @@ export async function uploadFiles(
   try {
     const type = options?.type ?? "file";
 
-    const parsed = sharedSchemas.files(type, options).safeParse(req.files);
-    if (!parsed.success) throw new Error(formatZodError(parsed.error));
+    const parsedFile = sharedSchemas.files(type, options).safeParse(req.files);
+    if (!parsedFile.success) throw new Error(formatZodError(parsedFile.error));
 
     const queryParsed = z
       .object({
@@ -89,7 +89,7 @@ export async function uploadFiles(
       : options?.fileName;
 
     const data = await Promise.all(
-      parsed.data.map(async (file) => {
+      parsedFile.data.map(async (file) => {
         const {
           fieldname,
           originalname,

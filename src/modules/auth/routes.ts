@@ -39,9 +39,9 @@ router.post(
       ),
     ]);
 
-    const bodyParsed = dataTableSchema.safeParse(req.body);
-    if (!bodyParsed.success)
-      return res.api({ code: 400, message: formatZodError(bodyParsed.error) });
+    const parsedBody = dataTableSchema.safeParse(req.body);
+    if (!parsedBody.success)
+      return res.api({ code: 400, message: formatZodError(parsedBody.error) });
 
     const dataDef = defineWDTConfig({
       queryBuilder: baseQb.selectAll("u").select("s.file_path"),
@@ -62,12 +62,12 @@ router.post(
       },
     });
 
-    const count = await withDataTable(bodyParsed.data, {
+    const count = await withDataTable(parsedBody.data, {
       queryBuilder: countQb,
       config: { ...dataDef.config, disabled: ["sorting", "pagination"] },
     }).executeTakeFirst();
 
-    const rawData = await withDataTable(bodyParsed.data, dataDef).execute();
+    const rawData = await withDataTable(parsedBody.data, dataDef).execute();
 
     const data = await Promise.all(
       rawData.map(async ({ file_path, ...rest }) => ({

@@ -5,9 +5,10 @@ export type ColumnDataType =
   | "option"
   | "multiOption";
 
-export const allTextFilterOperators = ["contains", "does not contain"] as const;
 export type TextFilterOperator = (typeof allTextFilterOperators)[number];
+export const allTextFilterOperators = ["contains", "does not contain"] as const;
 
+export type NumberFilterOperator = (typeof allNumberFilterOperators)[number];
 export const allNumberFilterOperators = [
   "is",
   "is not",
@@ -18,8 +19,8 @@ export const allNumberFilterOperators = [
   "is between",
   "is not between",
 ] as const;
-export type NumberFilterOperator = (typeof allNumberFilterOperators)[number];
 
+export type DateFilterOperator = (typeof allDateFilterOperators)[number];
 export const allDateFilterOperators = [
   "is",
   "is not",
@@ -30,16 +31,17 @@ export const allDateFilterOperators = [
   "is between",
   "is not between",
 ] as const;
-export type DateFilterOperator = (typeof allDateFilterOperators)[number];
 
+export type OptionFilterOperator = (typeof allOptionFilterOperators)[number];
 export const allOptionFilterOperators = [
   "is",
   "is not",
   "is any of",
   "is none of",
 ] as const;
-export type OptionFilterOperator = (typeof allOptionFilterOperators)[number];
 
+export type MultiOptionFilterOperator =
+  (typeof allMultiOptionFilterOperators)[number];
 export const allMultiOptionFilterOperators = [
   "include",
   "exclude",
@@ -48,9 +50,8 @@ export const allMultiOptionFilterOperators = [
   "include all of",
   "exclude if all",
 ] as const;
-export type MultiOptionFilterOperator =
-  (typeof allMultiOptionFilterOperators)[number];
 
+export type FilterOperators = (typeof allFilterOperators)[number];
 export const allFilterOperators = [
   ...allTextFilterOperators,
   ...allNumberFilterOperators,
@@ -58,7 +59,6 @@ export const allFilterOperators = [
   ...allOptionFilterOperators,
   ...allMultiOptionFilterOperators,
 ];
-export type FilterOperators = (typeof allFilterOperators)[number];
 
 export type FilterOperatorsMap = {
   text: TextFilterOperator;

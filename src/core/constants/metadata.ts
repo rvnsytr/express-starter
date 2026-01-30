@@ -1,3 +1,4 @@
+export type RequestMetaKey = (typeof allRequestMetaKey)[number];
 export const allRequestMetaKey = [
   "basePath",
   "href",
@@ -7,10 +8,9 @@ export const allRequestMetaKey = [
   "hash",
   "search",
 ] as const;
-export type RequestMetaKey = (typeof allRequestMetaKey)[number];
 
-export const allGenders = ["l", "p"] as const;
 export type Gender = (typeof allGenders)[number];
+export const allGenders = ["l", "p"] as const;
 export const genderMeta: Record<
   Gender,
   { displayName: string; color: string }
@@ -19,8 +19,8 @@ export const genderMeta: Record<
   p: { displayName: "Perempuan", color: "var(--color-pink-500)" },
 };
 
-export const allLanguages = ["en", "id", "es", "fr", "de", "ar"] as const;
 export type Language = (typeof allLanguages)[number];
+export const allLanguages = ["en", "id", "es", "fr", "de", "ar"] as const;
 export const languageMeta: Record<
   Language,
   { locale: string; currency: string; decimal: number; symbol: string }
