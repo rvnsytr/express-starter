@@ -67,10 +67,10 @@ router.post(
       config: { ...dataDef.config, disabled: ["sorting", "pagination"] },
     }).executeTakeFirst();
 
-    const rawData = await withDataTable(parsedBody.data, dataDef).execute();
+    const dataTable = await withDataTable(parsedBody.data, dataDef).execute();
 
     const data = await Promise.all(
-      rawData.map(async ({ file_path, ...rest }) => ({
+      dataTable.map(async ({ file_path, ...rest }) => ({
         ...rest,
         image: file_path ? await getPresignedUrl(file_path) : null,
       })),
