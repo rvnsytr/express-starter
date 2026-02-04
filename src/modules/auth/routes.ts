@@ -4,12 +4,11 @@ import {
   defineWDTConfig,
   withDataTable,
 } from "@/core/data-table";
-import { db } from "@/core/db";
+import { countWhere, db } from "@/core/db";
 import { authorize } from "@/core/middlewares";
 import { formatZodError, transformKeys } from "@/core/utils/formaters";
 import { toNodeHandler } from "better-auth/node";
 import { json, Router } from "express";
-import { sql } from "kysely";
 import { getPresignedUrl } from "../storage/actions";
 
 const router = Router();
@@ -23,21 +22,14 @@ router.post(
       .selectFrom("user as u")
       .leftJoin("storage as s", "u.image", "s.id");
 
-    const countQb = baseQb.select(() => [
-      sql<number>`COUNT(u.id)`.as("total"),
-      sql<number>`COALESCE(SUM(CASE WHEN u.role = 'user' THEN 1 ELSE 0 END), 0)`.as(
-        "user",
-      ),
-      sql<number>`COALESCE(SUM(CASE WHEN u.role = 'admin' THEN 1 ELSE 0 END), 0)`.as(
-        "admin",
-      ),
-      sql<number>`COALESCE(SUM(CASE WHEN u.banned = 1 THEN 1 ELSE 0 END), 0)`.as(
-        "banned",
-      ),
-      sql<number>`COALESCE(SUM(CASE WHEN u.banned = 0 THEN 1 ELSE 0 END), 0)`.as(
-        "active",
-      ),
-    ]);
+    const countQb = baseQb
+      .select(({ fn }) => fn.countAll<number>().as("total"))
+      .select([
+        countWhere(`u.role = 'user'`).as("user"),
+        countWhere(`u.role = 'admin'`).as("admin"),
+        countWhere(`u.banned = 1`).as("banned"),
+        countWhere(`u.banned = 0`).as("active"),
+      ]);
 
     const parsedBody = dataTableSchema.safeParse(req.body);
     if (!parsedBody.success)
@@ -55,8 +47,8 @@ router.post(
             parser: (v) => typeof v === "string" && v === "banned",
           },
           role: { column: "u.role", type: "string" },
-          updatedAt: { column: "u.updated_at", type: "string" },
-          createdAt: { column: "u.created_at", type: "string" },
+          updatedAt: { column: "u.updated_at", type: "date" },
+          createdAt: { column: "u.created_at", type: "date" },
         },
         defaultOrderBy: { column: "u.created_at", desc: true },
       },
