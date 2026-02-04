@@ -5,6 +5,7 @@ export const appMeta = {
   lang: "id",
 
   baseUrl: "http://localhost:8000",
+  defaultStorageDirectory: "tmp",
 
   cors: {
     origin: "http://localhost:3000",

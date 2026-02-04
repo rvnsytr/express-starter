@@ -1,3 +1,4 @@
+import { appMeta } from "@/core/constants/app";
 import { fileMeta, FileType } from "@/core/constants/file";
 import { ActionResponse } from "@/core/constants/types";
 import { db } from "@/core/db";
@@ -10,7 +11,8 @@ import { Client } from "minio";
 import z from "zod";
 
 const bucket = process.env.AWS_BUCKET!;
-const defaultDirectory = process.env.AWS_DIRECTORY ?? "tmp";
+const defaultDirectory =
+  process.env.AWS_DIRECTORY ?? appMeta.defaultStorageDirectory;
 
 const s3 = new Client({
   endPoint: process.env.AWS_ENDPOINT!,
