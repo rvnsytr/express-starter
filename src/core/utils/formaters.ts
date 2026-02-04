@@ -1,4 +1,4 @@
-import { ZodError } from "zod";
+import z from "zod";
 import { appMeta } from "../constants/app";
 import { Language, languageMeta } from "../constants/metadata";
 import {
@@ -124,10 +124,83 @@ export function formatPhone(number: string | number, prefix?: "+62" | "0") {
 }
 
 export function formatZodError<T>(
-  zodError: ZodError<T>,
+  zodError: z.ZodError<T>,
   withPath = false,
 ): string {
   const error = JSON.parse(zodError.message)[0];
   if (withPath) return `${error.path}: ${error.message}`;
   return error.message;
+}
+
+export type FormatCsvRangeOptions = {
+  sort?: "asc" | "desc";
+  distinct?: boolean;
+  exclude?: number[];
+};
+
+const formatCsvRangeSchema = z.coerce.number().int().positive();
+
+export function formatCsvRange(input: string, options?: FormatCsvRangeOptions) {
+  const excludeSet = new Set(options?.exclude ?? []);
+
+  const result: number[] = [];
+  const tokens = input.split(",");
+
+  for (const token of tokens) {
+    const trimmed = token.trim();
+
+    if (trimmed.includes("-")) {
+      const [startStr, endStr] = trimmed.split("-");
+
+      const start = Number(startStr);
+      const end = Number(endStr);
+
+      if (
+        formatCsvRangeSchema.safeParse(start).success &&
+        formatCsvRangeSchema.safeParse(end).success &&
+        start <= end
+      ) {
+        for (let i = start; i <= end; i++)
+          if (!excludeSet.has(i)) result.push(i);
+      }
+
+      continue;
+    }
+
+    const value = Number(trimmed);
+    if (formatCsvRangeSchema.safeParse(value).success && !excludeSet.has(value))
+      result.push(value);
+  }
+
+  const finalResult = options?.distinct ? Array.from(new Set(result)) : result;
+  if (options?.sort)
+    finalResult.sort((a, b) => (options.sort === "asc" ? a - b : b - a));
+
+  return finalResult;
+}
+
+export function formatNumberRange(nums: number[], minRangeSize = 10) {
+  if (!nums.length) return [];
+
+  const result: string[] = [];
+  let start = nums[0]!;
+  let prev = nums[0]!;
+
+  for (let i = 1; i <= nums.length; i++) {
+    const curr = nums[i]!;
+
+    if (curr === prev + 1) {
+      prev = curr;
+      continue;
+    }
+
+    const length = prev - start + 1;
+    if (length >= minRangeSize) result.push(`${start}-${prev}`);
+    else for (let n = start; n <= prev; n++) result.push(String(n));
+
+    start = curr;
+    prev = curr;
+  }
+
+  return result;
 }
