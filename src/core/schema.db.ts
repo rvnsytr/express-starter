@@ -3,13 +3,14 @@
 import { ColumnType, Generated, Selectable } from "kysely";
 import z from "zod";
 import { Override } from "./constants/types";
+
 import {
   accountTableSchema,
   sessionTableSchema,
-  storageTableSchema,
   userTableSchema,
   verificationTableSchema,
-} from "./schema.zod";
+} from "@/modules/auth/schema";
+import { storageTableSchema } from "@/modules/storage/schema";
 
 export type Database = {
   user: Override<

@@ -3,12 +3,13 @@ import { fileMeta, FileType } from "@/core/constants/file";
 import { ActionResponse } from "@/core/constants/types";
 import { db } from "@/core/db";
 import { Database, StorageTable } from "@/core/schema.db";
-import { sharedSchemas, storageTableSchema } from "@/core/schema.zod";
+import { sharedSchemas } from "@/core/schema.zod";
 import { formatZodError } from "@/core/utils/formaters";
 import { Request } from "express";
 import { Kysely } from "kysely";
 import { Client } from "minio";
 import z from "zod";
+import { storageTableSchema } from "./schema";
 
 const bucket = process.env.AWS_BUCKET!;
 const defaultDirectory =

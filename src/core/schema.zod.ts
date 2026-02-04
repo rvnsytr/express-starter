@@ -1,17 +1,8 @@
-import { allRoles } from "@/core/auth";
-import {
-  accountSchema as betterAuthAccountSchema,
-  sessionSchema as betterAuthSessionSchema,
-  userSchema as betterAuthUserSchema,
-  verificationSchema as betterAuthVerificationSchema,
-} from "better-auth";
 import z from "zod";
 import { fileMeta, FileType } from "./constants/file";
 import { messages } from "./constants/messages";
 import { allGenders } from "./constants/metadata";
-import { toMegabytes, transformKeys } from "./utils/formaters";
-
-// #region CORE
+import { toMegabytes } from "./utils/formaters";
 
 export const sharedSchemas = {
   string: (
@@ -257,52 +248,3 @@ export function withSchemaPrefix<P extends string, S extends z.ZodRawShape>(
   ) as { [K in keyof S as `${P}${string & K}`]: S[K] };
   return z.object(prefixedShape);
 }
-
-// #endregion
-
-export const userSchema = betterAuthUserSchema.extend({
-  email: sharedSchemas.email,
-  name: sharedSchemas.string("Nama", { min: 1 }),
-  image: z.string().optional().nullable(),
-  role: z.lazy(() => z.enum(allRoles)),
-  banned: z.boolean().default(false),
-  banReason: z.string().optional().nullable(),
-  banExpires: z.date().optional().nullable(),
-});
-
-export const userTableSchema = userSchema.transform((v) =>
-  transformKeys(v, "snake"),
-);
-
-export const accountTableSchema = betterAuthAccountSchema.transform((v) =>
-  transformKeys(v, "snake"),
-);
-
-export const sessionSchema = betterAuthSessionSchema.extend({
-  impersonatedBy: z.string().nullable().optional(),
-});
-
-export const sessionTableSchema = sessionSchema.transform((v) =>
-  transformKeys(v, "snake"),
-);
-
-export const verificationTableSchema = betterAuthVerificationSchema.transform(
-  (v) => transformKeys(v, "snake"),
-);
-
-export const storageTableSchema = z.object({
-  id: z.uuidv4(),
-
-  file_name: sharedSchemas.string("Nama file", { min: 1, max: 255 }),
-  category: z.enum(["image"]),
-  file_path: sharedSchemas.string("File path", { min: 1, max: 500 }),
-  mime_type: sharedSchemas.string("Tipe file", { max: 100 }),
-  file_size: sharedSchemas.number("Ukuran file"),
-
-  deleted_at: sharedSchemas.date("deleted_at").nullable().default(null),
-  deleted_by: sharedSchemas.string("deleted_by").nullable().default(null),
-  updated_at: sharedSchemas.date("updated_at").nullable().default(null),
-  updated_by: sharedSchemas.string("updated_by").nullable().default(null),
-  created_at: sharedSchemas.date("created_at"),
-  created_by: sharedSchemas.string("created_by"),
-});
