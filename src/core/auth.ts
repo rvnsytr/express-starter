@@ -142,7 +142,7 @@ export const auth = betterAuth({
         if (!session) return ctx.json(null);
 
         const { session: sessionData, user: userData } = session;
-        if (!userData.image) return ctx.json({ ...session, imageId: null });
+        if (!userData.image) return ctx.json(session);
 
         const data = await db
           .selectFrom("storage")
