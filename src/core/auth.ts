@@ -7,9 +7,10 @@ import { novu } from "./novu";
 import { ac, roles } from "./permission";
 
 export type AuthSession = typeof auth.$Infer.Session;
-export type Role = keyof typeof roles;
 
-export const allRoles = Object.keys(roles) as Role[];
+export type Role = (typeof allRoles)[number];
+export const allRoles = ["user", "admin"] as const;
+
 export const defaultRole: Role = "user";
 
 export const auth = betterAuth({
@@ -64,7 +65,7 @@ export const auth = betterAuth({
 
   user: {
     additionalFields: {
-      role: { type: allRoles, input: false, defaultValue: defaultRole },
+      role: { type: [...allRoles], input: false, defaultValue: defaultRole },
     },
     fields: {
       emailVerified: "email_verified",
@@ -112,16 +113,17 @@ export const auth = betterAuth({
           const session = ctx?.context.session;
           if (!session || !ctx.headers) throw new APIError("UNAUTHORIZED");
 
-          // if (user.image)
+          // if (user.image) {
           //   db.updateTable("storage")
           //     .set("deleted_by", session.user.id)
           //     .where("id", "=", user.image)
           //     .execute();
 
-          // auth.api.adminUpdateUser({
-          //   headers: ctx.headers,
-          //   body: { userId: user.id, data: { image: null } },
-          // });
+          //   auth.api.adminUpdateUser({
+          //     headers: ctx.headers,
+          //     body: { userId: user.id, data: { image: null } },
+          //   });
+          // }
 
           return false;
         },

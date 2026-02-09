@@ -32,5 +32,5 @@ export function createDialect(config?: DBConfig) {
 
 export const db = new Kysely<Database>({ dialect: createDialect() });
 
-export const countWhere = (condition: string) =>
-  sql<number>`COALESCE(SUM(CASE WHEN ${sql.raw(condition)} THEN 1 ELSE 0 END), 0)`;
+export const countWhere = (rawCondition: string) =>
+  sql<number>`COALESCE(SUM(CASE WHEN ${sql.raw(rawCondition)} THEN 1 ELSE 0 END), 0)`;

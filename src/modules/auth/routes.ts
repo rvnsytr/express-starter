@@ -25,10 +25,10 @@ router.post(
     const countQb = baseQb
       .select(({ fn }) => fn.countAll<number>().as("total"))
       .select([
-        countWhere(`u.role = 'user'`).as("user"),
-        countWhere(`u.role = 'admin'`).as("admin"),
-        countWhere(`u.banned = 1`).as("banned"),
-        countWhere(`u.banned = 0`).as("active"),
+        countWhere("u.role = 'user'").as("user"),
+        countWhere("u.role = 'admin'").as("admin"),
+        countWhere("u.banned = 1").as("banned"),
+        countWhere("u.banned = 0").as("active"),
       ]);
 
     const parsedBody = dataTableSchema.safeParse(req.body);
