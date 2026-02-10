@@ -42,7 +42,7 @@ router.get("/", authorize({ storage: ["list"] }), async (req, res) => {
 
 router.post(
   "/presigned-url",
-  authorize({ storage: ["list"] }),
+  authorize({ storage: ["get"] }),
   async (req, res) => {
     try {
       const parsedBody = z
