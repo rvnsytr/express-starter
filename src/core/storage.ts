@@ -5,11 +5,12 @@ import { db } from "@/core/db";
 import { Database, StorageTable } from "@/core/schema.db";
 import { sharedSchemas } from "@/core/schema.zod";
 import { formatZodError } from "@/core/utils/formaters";
+import { getFileParts } from "@/core/utils/helpers";
+import { storageTableSchema } from "@/modules/storage/schema";
 import { Request } from "express";
 import { Kysely } from "kysely";
 import { Client } from "minio";
 import z from "zod";
-import { storageTableSchema } from "./schema";
 
 const bucket = process.env.AWS_BUCKET!;
 const defaultDirectory =
@@ -37,14 +38,19 @@ export type UploadFilesOptions = {
   type?: FileType;
   userId?: string;
   db?: Kysely<Database>;
+
   min?: number;
   max?: number;
   maxFileSize?: number;
+
   unique?: boolean;
   prefix?: string;
   suffix?: string;
+
   fileName?: string;
   fileCategory?: StorageTable["category"];
+  withExtension?: boolean;
+
   overwriteByQuery?: boolean;
   directory?: string;
   disabled?: boolean;
@@ -66,26 +72,31 @@ export async function uploadFiles(
     const parsedFile = sharedSchemas.files(type, options).safeParse(req.files);
     if (!parsedFile.success) throw new Error(formatZodError(parsedFile.error));
 
-    const queryParsed = z
+    const parsedQuery = z
       .object({
         url: z.coerce.boolean().optional().default(false),
         fileName: z.string().optional(),
+        withExtension: sharedSchemas.boolean("No Extension").optional(),
       })
       .safeParse(req.query);
-    if (!queryParsed.success)
-      throw new Error(formatZodError(queryParsed.error));
+    if (!parsedQuery.success)
+      throw new Error(formatZodError(parsedQuery.error));
 
-    const userSchema = sharedSchemas
+    const parsedUserId = sharedSchemas
       .string("Used ID", { min: 1 })
       .safeParse(options?.userId ?? req.session?.user.id);
-    if (!userSchema.success) throw new Error(formatZodError(userSchema.error));
+    if (!parsedUserId.success)
+      throw new Error(formatZodError(parsedUserId.error));
 
-    const { url: withUrl, fileName: fileNameInQuery } = queryParsed.data;
+    const { url: withUrl, fileName: fileNameInQuery } = parsedQuery.data;
 
     const overwriteByQuery = options?.overwriteByQuery ?? false;
     const database = options?.db ?? db;
     const isDisabled = options?.disabled ?? false;
-    const userId = userSchema.data;
+    const userId = parsedUserId.data;
+
+    const withExtension =
+      parsedQuery.data.withExtension ?? options?.withExtension ?? true;
 
     const fileNameOption = overwriteByQuery
       ? (fileNameInQuery ?? options?.fileName)
@@ -112,18 +123,19 @@ export async function uploadFiles(
         }
 
         let id = crypto.randomUUID().toUpperCase();
-        const extension = originalname.split(".").pop();
+        const { fileName: originalFileName, extension } =
+          getFileParts(originalname);
 
         const now = options?.unique ? Date.now().toString() : "";
         const prefix = options?.prefix ?? "";
         const suffix = options?.suffix ?? "";
         const fileName = fileNameOption
-          ? `${fileNameOption}${now}${suffix}.${extension}`
-          : `${originalname}${now}${suffix}`;
+          ? `${prefix}${fileNameOption}${now}${suffix}`
+          : `${prefix}${originalFileName}${now}${suffix}`;
 
         const directory = options?.directory ?? defaultDirectory;
         const category = categoryParse.data.category;
-        const filePath = `${directory}/${category}/${prefix}${fileName}`;
+        const filePath = `${directory}/${category}/${fileName}${withExtension ? `.${extension}` : ""}`;
 
         let fileUrl = undefined;
 
@@ -207,26 +219,18 @@ export async function removeFiles(
   options?: RemoveFilesOptions,
 ) {
   try {
-    const userSchema = sharedSchemas
+    const parsedUserId = sharedSchemas
       .string("Used ID", { min: 1 })
       .safeParse(userId);
-    if (!userSchema.success) throw new Error(formatZodError(userSchema.error));
+    if (!parsedUserId.success)
+      throw new Error(formatZodError(parsedUserId.error));
 
-    const deletedBy = userSchema.data;
+    const deletedBy = parsedUserId.data;
     const searchBy = options?.by ?? "id";
     const database = options?.db ?? db;
     const isDisabled = options?.disabled ?? false;
 
     let count = 0;
-
-    const res = await database
-      .selectFrom("storage")
-      .select(searchBy)
-      .where(searchBy, "in", keys)
-      .execute();
-
-    console.log(res);
-
     if (!isDisabled) {
       const { numUpdatedRows } = await database
         .updateTable("storage")

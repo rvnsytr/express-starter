@@ -6,10 +6,10 @@ import {
 } from "@/core/data-table";
 import { countWhere, db } from "@/core/db";
 import { authorize } from "@/core/middlewares";
+import { getPresignedUrl } from "@/core/storage";
 import { formatZodError, transformKeys } from "@/core/utils/formaters";
 import { toNodeHandler } from "better-auth/node";
 import { json, Router } from "express";
-import { getPresignedUrl } from "../storage/actions";
 
 const router = Router();
 
@@ -23,7 +23,7 @@ router.post(
       .leftJoin("storage as s", "u.image", "s.id");
 
     const countQb = baseQb
-      .select(({ fn }) => fn.countAll<number>().as("total"))
+      .select((eb) => eb.fn.countAll<number>().as("total"))
       .select([
         countWhere("u.role = 'user'").as("user"),
         countWhere("u.role = 'admin'").as("admin"),

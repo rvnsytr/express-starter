@@ -1,10 +1,10 @@
 import { db } from "@/core/db";
 import { authorize } from "@/core/middlewares";
+import { getPresignedUrl, removeFiles, uploadFiles } from "@/core/storage";
 import { formatZodError, transformKeys } from "@/core/utils/formaters";
 import { Router } from "express";
 import multer from "multer";
 import z from "zod";
-import { getPresignedUrl, removeFiles, uploadFiles } from "./actions";
 import { storageTableSchema } from "./schema";
 
 const router = Router();
