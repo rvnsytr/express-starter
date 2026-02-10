@@ -14,16 +14,16 @@ export type Permissions = {
 
 export const ac = createAccessControl({
   ...defaultStatements,
-  example: ["create", "update", "delete"],
+  storage: ["create", "list", "update", "delete"],
 });
 
 export const roles: Record<Role, BetterAuthRole> = {
   user: ac.newRole({
-    example: ["create"],
+    storage: ["create"],
   }),
 
   admin: ac.newRole({
     ...adminAc.statements,
-    example: ["create", "update", "delete"],
+    storage: ["create", "update", "delete"],
   }),
 };

@@ -1,10 +1,10 @@
-import { getPresignedUrl, removeFiles } from "@/modules/storage/actions";
 import { APIError, betterAuth } from "better-auth";
 import { admin, createAuthMiddleware, openAPI } from "better-auth/plugins";
 import { appMeta } from "./constants/app";
 import { createDialect, db } from "./db";
 import { novu } from "./novu";
 import { ac, roles } from "./permission";
+import { getPresignedUrl, removeFiles } from "./storage";
 
 export type AuthSession = typeof auth.$Infer.Session;
 
@@ -150,6 +150,7 @@ export const auth = betterAuth({
           .selectFrom("storage")
           .select("file_path")
           .where("id", "=", userData.image)
+          .where("deleted_at", "is", null)
           .executeTakeFirst();
 
         if (!data) return ctx.json(session);
@@ -161,11 +162,11 @@ export const auth = betterAuth({
       }
 
       if (ctx.path === "/update-user") {
-        const oldImageId = session?.user.image;
-        const newImageId = newSession?.user.image;
+        const oldImgId = session?.user.image;
+        const newImgId = newSession?.user.image;
 
-        if (oldImageId && oldImageId !== newImageId)
-          removeFiles([oldImageId], session?.user.id);
+        if (oldImgId && oldImgId !== newImgId)
+          removeFiles([oldImgId], session?.user.id);
       }
     }),
   },
