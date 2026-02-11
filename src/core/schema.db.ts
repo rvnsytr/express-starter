@@ -10,6 +10,7 @@ import {
   userTableSchema,
   verificationTableSchema,
 } from "@/modules/auth/schema";
+import { eventLogTableSchema } from "@/modules/event-log/schema";
 import { storageTableSchema } from "@/modules/storage/schema";
 
 export type Database = {
@@ -50,6 +51,14 @@ export type Database = {
     z.infer<typeof storageTableSchema>,
     {
       updated_at: ColumnType<Date, never, Date>;
+      created_at: Generated<Date>;
+    }
+  >;
+
+  event_log: Override<
+    z.infer<typeof eventLogTableSchema>,
+    {
+      id: Generated<string>;
       created_at: Generated<Date>;
     }
   >;

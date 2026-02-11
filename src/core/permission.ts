@@ -15,6 +15,7 @@ export type Permissions = {
 export const ac = createAccessControl({
   ...defaultStatements,
   storage: ["create", "list", "get", "update", "delete"],
+  event_log: ["list", "get"],
 });
 
 export const roles: Record<Role, BetterAuthRole> = {

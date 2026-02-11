@@ -1,6 +1,9 @@
+import { userSchema } from "@/modules/auth/schema";
 import { APIError, betterAuth } from "better-auth";
 import { admin, createAuthMiddleware, openAPI } from "better-auth/plugins";
+import z from "zod";
 import { appMeta } from "./constants/app";
+import { messages } from "./constants/messages";
 import { createDialect, db } from "./db";
 import { novu } from "./novu";
 import { ac, roles } from "./permission";
@@ -49,6 +52,12 @@ export const auth = betterAuth({
         payload: { name, url },
       });
     },
+    onPasswordReset: async ({ user }) => {
+      await db
+        .insertInto("event_log")
+        .values({ type: "password-reset", user_id: user.id })
+        .execute();
+    },
   },
 
   emailVerification: {
@@ -60,6 +69,12 @@ export const auth = betterAuth({
         to: { subscriberId: email, email },
         payload: { name, url },
       });
+    },
+    afterEmailVerification: async (user) => {
+      await db
+        .insertInto("event_log")
+        .values({ type: "user-verified", user_id: user.id })
+        .execute();
     },
   },
 
@@ -108,24 +123,65 @@ export const auth = betterAuth({
 
   databaseHooks: {
     user: {
-      delete: {
-        before: async (_user, ctx) => {
+      create: {
+        after: async (user, ctx) => {
           const session = ctx?.context.session;
-          if (!session || !ctx.headers) throw new APIError("UNAUTHORIZED");
 
-          // if (user.image) {
-          //   db.updateTable("storage")
-          //     .set("deleted_by", session.user.id)
-          //     .where("id", "=", user.image)
-          //     .execute();
+          await db.transaction().execute(async (trx) => {
+            if (session)
+              await trx
+                .insertInto("event_log")
+                .values({
+                  type: "admin-user-create",
+                  user_id: session.user.id,
+                  entity_id: user.id,
+                })
+                .execute();
 
-          //   auth.api.adminUpdateUser({
-          //     headers: ctx.headers,
-          //     body: { userId: user.id, data: { image: null } },
-          //   });
-          // }
+            await trx
+              .insertInto("event_log")
+              .values({
+                type: session ? "user-created" : "user-registered",
+                user_id: user.id,
+              })
+              .execute();
+          });
+        },
+      },
+      delete: {
+        before: async (user, ctx) => {
+          const session = ctx?.context.session;
+          if (!session) throw new APIError("UNAUTHORIZED");
 
-          return false;
+          await db.transaction().execute(async (trx) => {
+            if (user.image)
+              await trx
+                .updateTable("storage")
+                .set("deleted_by", session.user.id)
+                .where("id", "=", user.image)
+                .execute();
+
+            await trx
+              .insertInto("event_log")
+              .values({
+                type: "admin-user-remove",
+                user_id: session.user.id,
+                data: user.name,
+              })
+              .execute();
+
+            // await trx
+            //   .insertInto("event_log")
+            //   .values({ type: "user_removed", user_id: user.id })
+            //   .execute();
+
+            // auth.api.adminUpdateUser({
+            //   headers: ctx.headers,
+            //   body: { userId: user.id, data: { image: null } },
+            // });
+          });
+
+          // return false;
         },
       },
     },
@@ -139,6 +195,11 @@ export const auth = betterAuth({
 
     after: createAuthMiddleware(async (ctx) => {
       const { session, newSession } = ctx.context;
+
+      const getUser = () => {
+        if (!session) throw new Error(messages.unauthorized);
+        return session.user;
+      };
 
       if (ctx.path === "/get-session") {
         if (!session) return ctx.json(null);
@@ -162,11 +223,68 @@ export const auth = betterAuth({
       }
 
       if (ctx.path === "/update-user") {
-        const oldImgId = session?.user.image;
-        const newImgId = newSession?.user.image;
+        const user = getUser();
 
-        if (oldImgId && oldImgId !== newImgId)
-          removeFiles([oldImgId], session?.user.id);
+        const oldImgId = user.image;
+        const newImgId = newSession?.user.image;
+        const isImgChange = oldImgId !== newImgId;
+
+        const res = await db.transaction().execute(async (trx) => {
+          await trx
+            .insertInto("event_log")
+            .values({
+              type: isImgChange ? "profile-image-updated" : "profile-updated",
+              user_id: user.id,
+              created_at: new Date(),
+            })
+            .execute();
+
+          if (oldImgId && isImgChange)
+            return await removeFiles([oldImgId], user.id, { db: trx });
+        });
+
+        if (res?.error) {
+          const message = res.error;
+          throw new APIError("INTERNAL_SERVER_ERROR", { message });
+        }
+      }
+
+      if (ctx.path === "/change-password") {
+        const user = getUser();
+        await db
+          .insertInto("event_log")
+          .values({ type: "password-changed", user_id: user.id })
+          .execute();
+      }
+
+      if (ctx.path === "/admin/ban-user" || ctx.path === "/admin/unban-user") {
+        if (!session?.user.id) throw new Error(messages.unauthorized);
+        const parsedBody = z
+          .object({ userId: userSchema.shape.id })
+          .parse(ctx.body);
+
+        const now = new Date();
+        const isBan = ctx.path === "/admin/ban-user";
+
+        await db.transaction().execute(async (trx) => {
+          await trx
+            .insertInto("event_log")
+            .values({
+              type: isBan ? "admin-user-ban" : "admin-user-unban",
+              user_id: session.user.id,
+              entity_id: parsedBody.userId,
+              created_at: now,
+            })
+            .execute();
+          await trx
+            .insertInto("event_log")
+            .values({
+              type: isBan ? "user-banned" : "user-unbanned",
+              user_id: parsedBody.userId,
+              created_at: now,
+            })
+            .execute();
+        });
       }
     }),
   },
