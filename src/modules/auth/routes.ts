@@ -1,9 +1,9 @@
 import { auth } from "@/core/auth";
 import {
-  dataTableSchema,
-  defineWDTConfig,
-  withDataTable,
-} from "@/core/data-table";
+  dataControllerSchema,
+  defineWDCConfig,
+  withDataController,
+} from "@/core/data-controller";
 import { countWhere, db } from "@/core/db";
 import { authorize } from "@/core/middlewares";
 import { getPresignedUrl } from "@/core/storage";
@@ -31,11 +31,11 @@ router.post(
         countWhere("u.banned = 0").as("active"),
       ]);
 
-    const parsedBody = dataTableSchema.safeParse(req.body);
+    const parsedBody = dataControllerSchema.safeParse(req.body);
     if (!parsedBody.success)
       return res.api({ code: 400, message: formatZodError(parsedBody.error) });
 
-    const dataDef = defineWDTConfig({
+    const dataDef = defineWDCConfig({
       queryBuilder: baseQb.selectAll("u").select("s.file_path"),
       config: {
         columns: {
@@ -54,12 +54,15 @@ router.post(
       },
     });
 
-    const count = await withDataTable(parsedBody.data, {
+    const count = await withDataController(parsedBody.data, {
       queryBuilder: countQb,
       config: { ...dataDef.config, disabled: ["sorting", "pagination"] },
     }).executeTakeFirst();
 
-    const dataTable = await withDataTable(parsedBody.data, dataDef).execute();
+    const dataTable = await withDataController(
+      parsedBody.data,
+      dataDef,
+    ).execute();
 
     const data = await Promise.all(
       dataTable.map(async ({ file_path, ...rest }) => ({

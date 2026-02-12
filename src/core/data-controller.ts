@@ -1,3 +1,5 @@
+// * State controller for managing tabular data.
+
 import { isValid } from "date-fns";
 import {
   Expression,
@@ -8,27 +10,7 @@ import {
 import z from "zod";
 import { allFilterOperators, FilterOperators } from "./constants/filter";
 
-type DataTableState = z.infer<typeof dataTableSchema>;
-
-type WDTColumnConfig<DB, TB extends keyof DB> = {
-  column: ReferenceExpression<DB, TB>;
-} & (
-  | { type: "string"; parser?: (value: string | number | Date) => string }
-  | { type: "number"; parser?: (value: string | number | Date) => number }
-  | { type: "date"; parser?: (value: string | number | Date) => Date }
-  | { type: "boolean"; parser: (value: string | number | Date) => boolean }
-);
-
-type WithDataTable<DB, TB extends keyof DB, O> = {
-  queryBuilder: SelectQueryBuilder<DB, TB, O>;
-  config: {
-    disabled?: (keyof DataTableState)[];
-    columns: Record<string, WDTColumnConfig<DB, TB>>;
-    defaultOrderBy: { column: ReferenceExpression<DB, TB>; desc: boolean };
-  };
-};
-
-export const dataTableSchema = z
+export const dataControllerSchema = z
   .object({
     globalFilter: z.string().default(""),
     columnFilters: z
@@ -56,13 +38,33 @@ export const dataTableSchema = z
     pagination: { pageIndex: 0, pageSize: 10 },
   });
 
-export const defineWDTConfig = <DB, TB extends keyof DB, O>(
-  config: WithDataTable<DB, TB, O>,
+type DataControllerState = z.infer<typeof dataControllerSchema>;
+
+type WDCColumnConfig<DB, TB extends keyof DB> = {
+  column: ReferenceExpression<DB, TB>;
+} & (
+  | { type: "string"; parser?: (value: string | number | Date) => string }
+  | { type: "number"; parser?: (value: string | number | Date) => number }
+  | { type: "date"; parser?: (value: string | number | Date) => Date }
+  | { type: "boolean"; parser: (value: string | number | Date) => boolean }
+);
+
+type WithDataController<DB, TB extends keyof DB, O> = {
+  queryBuilder: SelectQueryBuilder<DB, TB, O>;
+  config: {
+    disabled?: (keyof DataControllerState)[];
+    columns: Record<string, WDCColumnConfig<DB, TB>>;
+    defaultOrderBy: { column: ReferenceExpression<DB, TB>; desc: boolean };
+  };
+};
+
+export const defineWDCConfig = <DB, TB extends keyof DB, O>(
+  config: WithDataController<DB, TB, O>,
 ) => config;
 
-export function withDataTable<DB, TB extends keyof DB, O>(
-  state: DataTableState,
-  definition: WithDataTable<DB, TB, O>,
+export function withDataController<DB, TB extends keyof DB, O>(
+  state: DataControllerState,
+  definition: WithDataController<DB, TB, O>,
 ) {
   let qb = definition.queryBuilder;
   const { config } = definition;
