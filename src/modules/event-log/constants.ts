@@ -2,6 +2,7 @@ export type EventLogType = (typeof allEventLogType)[number];
 export const allEventLogType = [
   "user-registered",
   "user-created",
+  // "user-imported",
   "user-verified",
   "user-banned",
   "user-unbanned",

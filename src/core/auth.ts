@@ -172,7 +172,7 @@ export const auth = betterAuth({
 
             // await trx
             //   .insertInto("event_log")
-            //   .values({ type: "user_removed", user_id: user.id })
+            //   .values({ type: "user-removed", user_id: user.id })
             //   .execute();
 
             // auth.api.adminUpdateUser({

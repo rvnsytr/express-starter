@@ -60,7 +60,8 @@ export async function getEventLogById(
   const count = await withDataController(parsedBody.data, {
     queryBuilder: db
       .selectFrom("event_log as el")
-      .select((eb) => eb.fn.countAll<number>().as("total")),
+      .select((eb) => eb.fn.countAll<number>().as("total"))
+      .where("el.user_id", "=", id),
     config: { ...dataDef.config, disabled: ["sorting", "pagination"] },
   }).executeTakeFirst();
 

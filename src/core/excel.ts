@@ -79,8 +79,8 @@ export async function readExcelSheet<S extends ZodType>(
     data.push(parsedRow.data);
   });
 
-  if (errorMessage) return { success: false, error: errorMessage };
-
   promises.unlink(inputPath);
+
+  if (errorMessage) return { success: false, error: errorMessage };
   return { success: true, data };
 }
