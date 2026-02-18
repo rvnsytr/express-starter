@@ -8,7 +8,7 @@ import {
   SqlBool,
 } from "kysely";
 import z from "zod";
-import { allFilterOperators, FilterOperators } from "./constants/filter";
+import { allFilterOperators, FilterOperators } from "./constants/data-filter";
 
 export const dataControllerSchema = z
   .object({

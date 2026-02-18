@@ -1,4 +1,4 @@
-export type ColumnDataType =
+export type FilterDataType =
   | "text"
   | "number"
   | "date"
