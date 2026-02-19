@@ -143,6 +143,7 @@ export const auth = betterAuth({
               .values({
                 type: session ? "user-created" : "user-registered",
                 user_id: user.id,
+                entity_id: session ? session.user.id : null,
               })
               .execute();
           });
@@ -235,7 +236,6 @@ export const auth = betterAuth({
             .values({
               type: isImgChange ? "profile-image-updated" : "profile-updated",
               user_id: user.id,
-              created_at: new Date(),
             })
             .execute();
 
@@ -262,8 +262,6 @@ export const auth = betterAuth({
         const parsedBody = z
           .object({ userId: userSchema.shape.id })
           .parse(ctx.body);
-
-        const now = new Date();
         const isBan = ctx.path === "/admin/ban-user";
 
         await db.transaction().execute(async (trx) => {
@@ -273,7 +271,6 @@ export const auth = betterAuth({
               type: isBan ? "admin-user-ban" : "admin-user-unban",
               user_id: session.user.id,
               entity_id: parsedBody.userId,
-              created_at: now,
             })
             .execute();
           await trx
@@ -281,7 +278,6 @@ export const auth = betterAuth({
             .values({
               type: isBan ? "user-banned" : "user-unbanned",
               user_id: parsedBody.userId,
-              created_at: now,
             })
             .execute();
         });

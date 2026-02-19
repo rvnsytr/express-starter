@@ -3,38 +3,47 @@ import {
   defineWDCConfig,
   withDataController,
 } from "@/core/data-controller";
-import { db } from "@/core/db";
+import { countWhere, db } from "@/core/db";
 import { formatZodError, transformKeys } from "@/core/utils/formaters";
+import { allEventLogType } from "./constants";
 
-export const eventLogDataQuery = db
+const eventLogQuery = db.selectFrom("event_log as el").select((eb) => [
+  "el.id",
+  "el.type",
+  "el.data",
+  "el.created_at",
+  eb
+    .case()
+    .when("el.type", "in", [
+      "user-created",
+      "admin-user-create",
+      "admin-user-ban",
+      "admin-user-unban",
+      "admin-user-remove",
+    ])
+    .then(
+      eb
+        .selectFrom("user as u")
+        .select("u.name")
+        .whereRef("u.id", "=", "el.entity_id"),
+    )
+    .else(null)
+    .end()
+    .as("entity"),
+]);
+
+export const eventLogCountQuery = db
   .selectFrom("event_log as el")
-  .select((eb) => [
-    "el.id",
-    "el.type",
-    "el.data",
-    "el.created_at",
-    eb
-      .case()
-      .when("el.type", "in", [
-        "admin-user-create",
-        "admin-user-ban",
-        "admin-user-unban",
-        "admin-user-remove",
-      ])
-      .then(
-        eb
-          .selectFrom("user as u")
-          .select("u.name")
-          .whereRef("u.id", "=", "el.entity_id"),
-      )
-      .else(null)
-      .end()
-      .as("entity"),
-  ]);
+  .select((eb) => eb.fn.countAll<number>().as("total"))
+  .select(allEventLogType.map((t) => countWhere(`el.type = '${t}'`).as(t)));
 
-export function getEventLogDataWDTConfig(qb?: typeof eventLogDataQuery) {
+type EventLogQuery = typeof eventLogQuery;
+
+export function getEventLogWDCConfig(
+  getQB?: (qb: EventLogQuery) => EventLogQuery,
+) {
   return defineWDCConfig({
-    queryBuilder: qb ?? eventLogDataQuery,
+    queryBuilder: getQB?.(eventLogQuery) ?? eventLogQuery,
     config: {
       columns: {
         type: { column: "el.type", type: "string" },
@@ -53,15 +62,10 @@ export async function getEventLogById(
   if (!parsedBody.success)
     return { code: 400, message: formatZodError(parsedBody.error) };
 
-  const dataDef = getEventLogDataWDTConfig(
-    eventLogDataQuery.where("el.user_id", "=", id),
-  );
+  const dataDef = getEventLogWDCConfig((qb) => qb.where("el.user_id", "=", id));
 
   const count = await withDataController(parsedBody.data, {
-    queryBuilder: db
-      .selectFrom("event_log as el")
-      .select((eb) => eb.fn.countAll<number>().as("total"))
-      .where("el.user_id", "=", id),
+    queryBuilder: eventLogCountQuery.where("el.user_id", "=", id),
     config: { ...dataDef.config, disabled: ["sorting", "pagination"] },
   }).executeTakeFirst();
 

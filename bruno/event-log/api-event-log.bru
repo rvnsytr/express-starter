@@ -1,0 +1,16 @@
+meta {
+  name: /api/event-log
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{host}}/api/event-log
+  body: none
+  auth: none
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

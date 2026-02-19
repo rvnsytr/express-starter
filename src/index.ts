@@ -7,6 +7,7 @@ import { appMeta } from "./core/constants/app";
 import { errorHandler, init, notFoundHandler } from "./core/middlewares";
 
 import { router as authRoutes } from "./modules/auth/routes";
+import { router as eventLogRoutes } from "./modules/event-log/routes";
 import { router as storageRoutes } from "./modules/storage/routes";
 
 const app = express();
@@ -24,6 +25,7 @@ app.use(express.json());
 
 app.get("/api", (_, res) => res.api({ message: `Hello, ${appMeta.name}` }));
 app.use("/api/storage", storageRoutes);
+app.use("/api/event-log", eventLogRoutes);
 
 app.all("/*splat", notFoundHandler);
 app.use(errorHandler);

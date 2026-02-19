@@ -2,12 +2,15 @@ import {
   dataControllerSchema,
   withDataController,
 } from "@/core/data-controller";
-import { db } from "@/core/db";
 import { authorize } from "@/core/middlewares";
 import { formatZodError, transformKeys } from "@/core/utils/formaters";
 import { Router } from "express";
 import z from "zod";
-import { getEventLogById, getEventLogDataWDTConfig } from "./actions";
+import {
+  eventLogCountQuery,
+  getEventLogById,
+  getEventLogWDCConfig,
+} from "./actions";
 
 const router = Router();
 
@@ -16,12 +19,10 @@ router.get("/", authorize({ event_log: ["list"] }), async (req, res) => {
   if (!parsedBody.success)
     return { code: 400, message: formatZodError(parsedBody.error) };
 
-  const dataDef = getEventLogDataWDTConfig();
+  const dataDef = getEventLogWDCConfig();
 
   const count = await withDataController(parsedBody.data, {
-    queryBuilder: db
-      .selectFrom("event_log as el")
-      .select((eb) => eb.fn.countAll<number>().as("total")),
+    queryBuilder: eventLogCountQuery,
     config: { ...dataDef.config, disabled: ["sorting", "pagination"] },
   }).executeTakeFirst();
 
@@ -30,24 +31,28 @@ router.get("/", authorize({ event_log: ["list"] }), async (req, res) => {
   return res.api({ count, data: transformKeys(data, "camel") });
 });
 
-router.post("/me", authorize(), async (req, res) => {
+router.post("/me", authorize({ event_log: ["list:own"] }), async (req, res) => {
   const authUserId = req.session?.user.id;
   if (!authUserId) return res.api({ code: 400 });
   const json = await getEventLogById(req.body, authUserId);
   return res.api(json);
 });
 
-router.post("/:id", authorize({ event_log: ["get"] }), async (req, res) => {
-  const parsedParams = z.object({ id: z.string() }).safeParse(req.params);
-  if (!parsedParams.success)
-    return res.api({ message: formatZodError(parsedParams.error) });
+router.post(
+  "/:id",
+  authorize({ event_log: ["list:user"] }),
+  async (req, res) => {
+    const parsedParams = z.object({ id: z.string() }).safeParse(req.params);
+    if (!parsedParams.success)
+      return res.api({ message: formatZodError(parsedParams.error) });
 
-  const parsedBody = dataControllerSchema.safeParse(req.body);
-  if (!parsedBody.success)
-    return res.api({ code: 400, message: formatZodError(parsedBody.error) });
+    const parsedBody = dataControllerSchema.safeParse(req.body);
+    if (!parsedBody.success)
+      return res.api({ code: 400, message: formatZodError(parsedBody.error) });
 
-  const json = await getEventLogById(req.body, parsedParams.data.id);
-  return res.api(json);
-});
+    const json = await getEventLogById(req.body, parsedParams.data.id);
+    return res.api(json);
+  },
+);
 
 export { router };
