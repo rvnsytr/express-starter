@@ -17,8 +17,10 @@ router.get("/", authorize({ storage: ["list"] }), async (req, res) => {
     })
     .safeParse(req.query);
 
-  if (!parsedBody.success)
-    return res.api({ code: 400, message: formatZodError(parsedBody.error) });
+  if (!parsedBody.success) {
+    const message = formatZodError(parsedBody.error, true);
+    return res.api({ code: 400, message });
+  }
 
   const { url: withUrl, category } = parsedBody.data;
 
@@ -44,33 +46,31 @@ router.post(
   "/presigned-url",
   authorize({ storage: ["get"] }),
   async (req, res) => {
-    try {
-      const parsedBody = z
-        .object({ data: z.string().array() })
-        .safeParse(req.body);
+    const parsedBody = z
+      .object({ data: z.string().array() })
+      .safeParse(req.body);
 
-      if (!parsedBody.success)
-        throw new Error(formatZodError(parsedBody.error));
-
-      const { data: keys } = parsedBody.data;
-
-      const result = await db
-        .selectFrom("storage")
-        .select(["id", "file_path"])
-        .where("id", "in", keys)
-        .execute();
-
-      const data = await Promise.all(
-        result.map(async ({ id, file_path }) => {
-          const fileUrl = await getPresignedUrl(file_path);
-          return { id, fileUrl };
-        }),
-      );
-
-      return res.api({ data });
-    } catch (e) {
-      return res.api({ code: 400, message: (e as Error).message });
+    if (!parsedBody.success) {
+      const message = formatZodError(parsedBody.error, true);
+      return res.api({ code: 400, message });
     }
+
+    const { data: keys } = parsedBody.data;
+
+    const result = await db
+      .selectFrom("storage")
+      .select(["id", "file_path"])
+      .where("id", "in", keys)
+      .execute();
+
+    const data = await Promise.all(
+      result.map(async ({ id, file_path }) => {
+        const fileUrl = await getPresignedUrl(file_path);
+        return { id, fileUrl };
+      }),
+    );
+
+    return res.api({ data });
   },
 );
 
@@ -94,12 +94,16 @@ router.delete("/", authorize({ storage: ["delete"] }), async (req, res) => {
     .object({ ids: z.array(z.uuidv4()), userId: z.string() })
     .safeParse(req.body);
 
-  if (!parsedBody.success) throw new Error(formatZodError(parsedBody.error));
+  if (!parsedBody.success) {
+    const message = formatZodError(parsedBody.error, true);
+    return res.api({ code: 400, message });
+  }
 
   const queryParsed = z
     .object({ by: z.enum(["id", "file_path"]).default("id") })
     .safeParse(req.query);
-  if (!queryParsed.success) throw new Error(formatZodError(queryParsed.error));
+  if (!queryParsed.success)
+    return res.api({ code: 400, message: formatZodError(queryParsed.error) });
 
   const { by } = queryParsed.data;
   const { ids, userId } = parsedBody.data;

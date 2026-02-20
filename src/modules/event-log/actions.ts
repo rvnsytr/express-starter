@@ -60,7 +60,7 @@ export async function getEventLogById(
 ) {
   const parsedBody = dataControllerSchema.safeParse(reqBody);
   if (!parsedBody.success)
-    return { code: 400, message: formatZodError(parsedBody.error) };
+    return { code: 400, message: formatZodError(parsedBody.error, true) };
 
   const dataDef = getEventLogWDCConfig((qb) => qb.where("el.user_id", "=", id));
 

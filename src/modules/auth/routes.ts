@@ -32,8 +32,10 @@ router.post(
       ]);
 
     const parsedBody = dataControllerSchema.safeParse(req.body);
-    if (!parsedBody.success)
-      return res.api({ code: 400, message: formatZodError(parsedBody.error) });
+    if (!parsedBody.success) {
+      const message = formatZodError(parsedBody.error, true);
+      return res.api({ code: 400, message });
+    }
 
     const dataDef = defineWDCConfig({
       queryBuilder: baseQb.selectAll("u").select("s.file_path"),

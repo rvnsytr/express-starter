@@ -14,10 +14,12 @@ import {
 
 const router = Router();
 
-router.get("/", authorize({ event_log: ["list"] }), async (req, res) => {
+router.post("/", authorize({ event_log: ["list"] }), async (req, res) => {
   const parsedBody = dataControllerSchema.safeParse(req.body);
-  if (!parsedBody.success)
-    return { code: 400, message: formatZodError(parsedBody.error) };
+  if (!parsedBody.success) {
+    const message = formatZodError(parsedBody.error, true);
+    return res.api({ code: 400, message });
+  }
 
   const dataDef = getEventLogWDCConfig();
 
@@ -47,8 +49,10 @@ router.post(
       return res.api({ message: formatZodError(parsedParams.error) });
 
     const parsedBody = dataControllerSchema.safeParse(req.body);
-    if (!parsedBody.success)
-      return res.api({ code: 400, message: formatZodError(parsedBody.error) });
+    if (!parsedBody.success) {
+      const message = formatZodError(parsedBody.error);
+      return res.api({ code: 400, message });
+    }
 
     const json = await getEventLogById(req.body, parsedParams.data.id);
     return res.api(json);

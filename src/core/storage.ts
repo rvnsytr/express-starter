@@ -70,7 +70,8 @@ export async function uploadFiles(
     const type = options?.type ?? "file";
 
     const parsedFile = sharedSchemas.files(type, options).safeParse(req.files);
-    if (!parsedFile.success) throw new Error(formatZodError(parsedFile.error));
+    if (!parsedFile.success)
+      throw new Error(formatZodError(parsedFile.error, true));
 
     const parsedQuery = z
       .object({
@@ -80,7 +81,7 @@ export async function uploadFiles(
       })
       .safeParse(req.query);
     if (!parsedQuery.success)
-      throw new Error(formatZodError(parsedQuery.error));
+      throw new Error(formatZodError(parsedQuery.error, true));
 
     const parsedUserId = sharedSchemas
       .string("Used ID", { min: 1 })
