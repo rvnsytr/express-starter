@@ -78,49 +78,6 @@ export const auth = betterAuth({
     },
   },
 
-  user: {
-    additionalFields: {
-      role: { type: [...allRoles], input: false, defaultValue: defaultRole },
-    },
-    fields: {
-      emailVerified: "email_verified",
-      createdAt: "created_at",
-      updatedAt: "updated_at",
-    },
-  },
-  account: {
-    fields: {
-      accountId: "account_id",
-      providerId: "provider_id",
-      userId: "user_id",
-      accessToken: "access_token",
-      refreshToken: "refresh_token",
-      idToken: "id_token",
-      accessTokenExpiresAt: "access_token_expires_at",
-      refreshTokenExpiresAt: "refresh_token_expires_at",
-      createdAt: "created_at",
-      updatedAt: "updated_at",
-    },
-  },
-  session: {
-    fields: {
-      expiresAt: "expires_at",
-      createdAt: "created_at",
-      updatedAt: "updated_at",
-      ipAddress: "ip_address",
-      userAgent: "user_agent",
-      userId: "user_id",
-      impersonatedBy: "impersonated_by",
-    },
-  },
-  verification: {
-    fields: {
-      expiresAt: "expires_at",
-      createdAt: "created_at",
-      updatedAt: "updated_at",
-    },
-  },
-
   databaseHooks: {
     user: {
       create: {
@@ -259,9 +216,11 @@ export const auth = betterAuth({
 
       if (ctx.path === "/admin/ban-user" || ctx.path === "/admin/unban-user") {
         if (!session?.user.id) throw new Error(messages.unauthorized);
+
         const parsedBody = z
           .object({ userId: userSchema.shape.id })
           .parse(ctx.body);
+
         const isBan = ctx.path === "/admin/ban-user";
 
         await db.transaction().execute(async (trx) => {
@@ -283,5 +242,48 @@ export const auth = betterAuth({
         });
       }
     }),
+  },
+
+  user: {
+    additionalFields: {
+      role: { type: [...allRoles], input: false, defaultValue: defaultRole },
+    },
+    fields: {
+      emailVerified: "email_verified",
+      createdAt: "created_at",
+      updatedAt: "updated_at",
+    },
+  },
+  account: {
+    fields: {
+      accountId: "account_id",
+      providerId: "provider_id",
+      userId: "user_id",
+      accessToken: "access_token",
+      refreshToken: "refresh_token",
+      idToken: "id_token",
+      accessTokenExpiresAt: "access_token_expires_at",
+      refreshTokenExpiresAt: "refresh_token_expires_at",
+      createdAt: "created_at",
+      updatedAt: "updated_at",
+    },
+  },
+  session: {
+    fields: {
+      expiresAt: "expires_at",
+      createdAt: "created_at",
+      updatedAt: "updated_at",
+      ipAddress: "ip_address",
+      userAgent: "user_agent",
+      userId: "user_id",
+      impersonatedBy: "impersonated_by",
+    },
+  },
+  verification: {
+    fields: {
+      expiresAt: "expires_at",
+      createdAt: "created_at",
+      updatedAt: "updated_at",
+    },
   },
 });
