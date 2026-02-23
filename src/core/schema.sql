@@ -13,8 +13,8 @@ CREATE TABLE [user] (
     ban_expires DATETIMEOFFSET
 );
 
-CREATE INDEX idx_user_role ON [user](role);
-CREATE INDEX idx_user_banned ON [user](banned);
+CREATE INDEX IDX_user_role ON [user](role);
+CREATE INDEX IDX_user_banned ON [user](banned);
 
 
 CREATE TABLE [account] (
@@ -33,8 +33,8 @@ CREATE TABLE [account] (
     updated_at DATETIMEOFFSET NOT NULL DEFAULT SYSDATETIMEOFFSET()
 );
 
-CREATE INDEX idx_account_user_id ON [account](user_id);
-CREATE UNIQUE INDEX idx_account_provider_account ON [account](provider_id, account_id);
+CREATE INDEX IDX_account_user_id ON [account](user_id);
+CREATE UNIQUE INDEX IDX_account_provider_account ON [account](provider_id, account_id);
 
 
 CREATE TABLE [session] (
@@ -49,8 +49,8 @@ CREATE TABLE [session] (
     impersonatedBy NVARCHAR(2048)
 );
 
-CREATE INDEX idx_session_user_id ON [session](user_id);
-CREATE INDEX idx_session_expires_at ON [session](expires_at);
+CREATE INDEX IDX_session_user_id ON [session](user_id);
+CREATE INDEX IDX_session_expires_at ON [session](expires_at);
 
 
 CREATE TABLE [verification] (
@@ -62,8 +62,8 @@ CREATE TABLE [verification] (
     updated_at DATETIMEOFFSET NOT NULL DEFAULT SYSDATETIMEOFFSET()
 );
 
-CREATE INDEX idx_verification_identifier_value ON [verification](identifier, value);
-CREATE INDEX idx_verification_expires ON [verification](expires_at);
+CREATE INDEX IDX_verification_identifier_value ON [verification](identifier, value);
+CREATE INDEX IDX_verification_expires ON [verification](expires_at);
 
 
 CREATE TABLE [storage] (
@@ -87,9 +87,9 @@ CREATE TABLE [storage] (
     CONSTRAINT FK_files_created_by FOREIGN KEY (created_by) REFERENCES [user](id)
 );
 
-CREATE INDEX idx_storage_created_by ON [storage](created_by);
-CREATE INDEX idx_storage_updated_by ON [storage](updated_by);
-CREATE INDEX idx_storage_deleted_by ON [storage](deleted_by);
+CREATE INDEX IDX_storage_created_by ON [storage](created_by);
+CREATE INDEX IDX_storage_updated_by ON [storage](updated_by);
+CREATE INDEX IDX_storage_deleted_by ON [storage](deleted_by);
 
 
 CREATE TABLE [event_log] (
@@ -103,4 +103,4 @@ CREATE TABLE [event_log] (
     created_at DATETIME2 NOT NULL DEFAULT SYSDATETIMEOFFSET()
 );
 
-CREATE INDEX idx_event_log_user_id_created_at ON [event_log](user_id, created_at DESC);
+CREATE INDEX IDX_event_log_user_id_created_at ON [event_log](user_id, created_at DESC);

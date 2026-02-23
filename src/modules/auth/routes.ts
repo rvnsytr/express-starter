@@ -18,6 +18,12 @@ router.post(
   authorize({ user: ["list"] }),
   json(),
   async (req, res) => {
+    const parsedBody = dataControllerSchema.safeParse(req.body);
+    if (!parsedBody.success) {
+      const message = formatZodError(parsedBody.error, true);
+      return res.api({ code: 400, message });
+    }
+
     const baseQb = db
       .selectFrom("user as u")
       .leftJoin("storage as s", "u.image", "s.id");
@@ -30,12 +36,6 @@ router.post(
         countWhere("u.banned = 1").as("banned"),
         countWhere("u.banned = 0").as("active"),
       ]);
-
-    const parsedBody = dataControllerSchema.safeParse(req.body);
-    if (!parsedBody.success) {
-      const message = formatZodError(parsedBody.error, true);
-      return res.api({ code: 400, message });
-    }
 
     const dataDef = defineWDCConfig({
       queryBuilder: baseQb.selectAll("u").select("s.file_path"),
