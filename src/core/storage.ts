@@ -70,7 +70,7 @@ export async function uploadFiles(
 
   const parsedFile = sharedSchemas.files(type, options).safeParse(req.files);
   if (!parsedFile.success)
-    return { success: false, ...formatZodError(parsedFile.error, true) };
+    return formatZodError(parsedFile.error, { part: "files", withPath: true });
 
   const parsedQuery = z
     .object({
@@ -80,13 +80,12 @@ export async function uploadFiles(
     })
     .safeParse(req.query);
   if (!parsedQuery.success)
-    return { success: false, ...formatZodError(parsedQuery.error, true) };
+    return formatZodError(parsedQuery.error, { withPath: true });
 
   const parsedUserId = sharedSchemas
     .string("Used ID", { min: 1 })
     .safeParse(options?.userId ?? req.session?.user.id);
-  if (!parsedUserId.success)
-    return { success: false, ...formatZodError(parsedUserId.error, true) };
+  if (!parsedUserId.success) return formatZodError(parsedUserId.error);
 
   try {
     const { url: withUrl, fileName: fileNameInQuery } = parsedQuery.data;
@@ -219,14 +218,7 @@ export async function removeFiles(
   userId: string,
   options?: RemoveFilesOptions,
 ): Promise<ActionResponse> {
-  const parsedUserId = sharedSchemas
-    .string("Used ID", { min: 1 })
-    .safeParse(userId);
-  if (!parsedUserId.success)
-    return { success: false, ...formatZodError(parsedUserId.error) };
-
   try {
-    const deletedBy = parsedUserId.data;
     const searchBy = options?.by ?? "id";
     const database = options?.db ?? db;
     const isDisabled = options?.disabled ?? false;
@@ -235,7 +227,7 @@ export async function removeFiles(
     if (!isDisabled) {
       const { numUpdatedRows } = await database
         .updateTable("storage")
-        .set({ deleted_by: deletedBy, deleted_at: new Date() })
+        .set({ deleted_by: userId, deleted_at: new Date() })
         .where(searchBy, "in", keys)
         .executeTakeFirst();
       total = Number(numUpdatedRows);

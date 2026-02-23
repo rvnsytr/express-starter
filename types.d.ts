@@ -1,6 +1,6 @@
 import { AuthSession } from "@/core/auth";
 import "express-serve-static-core";
-import { ApiResponse } from "./src/core/middlewares";
+import { ApiPayload } from "./src/core/constants/types";
 
 declare global {
   namespace Express {
@@ -11,7 +11,7 @@ declare global {
     }
 
     interface Response {
-      api: <T>(payload?: Partial<ApiResponse<T>>) => void;
+      api: <T>(payload?: ApiPayload<T>) => void;
     }
   }
 }

@@ -2,6 +2,8 @@ import z from "zod";
 import { appMeta } from "../constants/app";
 import { Language, languageMeta } from "../constants/metadata";
 import {
+  ActionResponse,
+  RequestPart,
   StringCase,
   TransformableStringCase,
   TransformKeys,
@@ -123,21 +125,19 @@ export function formatPhone(number: string | number, prefix?: "+62" | "0") {
   return `${prefix ?? ""} ${formatted}`.trim();
 }
 
-export type FormattedZodError<T> = {
-  message: string;
-  error: z.core.$ZodErrorTree<T, string>;
-};
-
 export function formatZodError<T>(
   zodError: z.ZodError<T>,
-  withPath = false,
-): FormattedZodError<T> {
+  options?: { part?: RequestPart; withPath?: boolean },
+): Extract<ActionResponse, { success: false }> {
   const firstIssue = zodError.issues[0];
-  const message =
-    withPath && firstIssue?.path.length
-      ? `[${firstIssue.path.join(".")}] ${firstIssue.message}`
-      : (firstIssue?.message ?? "Validation error");
-  return { message, error: z.treeifyError(zodError) };
+  let message = firstIssue?.message ?? "Validation error";
+
+  if (options?.withPath && firstIssue?.path.length) {
+    const paths = [options?.part, ...firstIssue.path].filter(Boolean);
+    message = `[${paths.join(".")}] ${firstIssue.message}`;
+  }
+
+  return { success: false, message, error: z.treeifyError(zodError) };
 }
 
 export type FormatCsvRangeOptions = {

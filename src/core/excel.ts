@@ -39,7 +39,7 @@ export async function readExcelSheet<S extends ZodType>(
     .safeParse(config.reqBody);
 
   if (!parsedConfig.success)
-    return { success: false, ...formatZodError(parsedConfig.error, true) };
+    return formatZodError(parsedConfig.error, { withPath: true });
 
   const { sheet: rawSheet, skipRows, source } = parsedConfig.data;
   const sheet = !!rawSheet ? rawSheet : "Sheet1";

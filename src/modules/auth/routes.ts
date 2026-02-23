@@ -5,23 +5,19 @@ import {
   withDataController,
 } from "@/core/data-controller";
 import { countWhere, db } from "@/core/db";
-import { authorize } from "@/core/middlewares";
+import { authorize, validateRequest } from "@/core/middlewares";
 import { getPresignedUrl } from "@/core/storage";
-import { formatZodError, transformKeys } from "@/core/utils/formaters";
+import { transformKeys } from "@/core/utils/formaters";
 import { toNodeHandler } from "better-auth/node";
-import { json, Router } from "express";
+import { Router } from "express";
 
 const router = Router();
 
 router.post(
   "/admin/list-users",
   authorize({ user: ["list"] }),
-  json(),
+  validateRequest({ body: dataControllerSchema }),
   async (req, res) => {
-    const parsedBody = dataControllerSchema.safeParse(req.body);
-    if (!parsedBody.success)
-      return res.api({ code: 400, ...formatZodError(parsedBody.error, true) });
-
     const baseQb = db
       .selectFrom("user as u")
       .leftJoin("storage as s", "u.image", "s.id");
@@ -54,13 +50,13 @@ router.post(
       },
     });
 
-    const count = await withDataController(parsedBody.data, {
+    const count = await withDataController(req.body, {
       queryBuilder: countQb,
       config: { ...dataDef.config, disabled: ["sorting", "pagination"] },
     }).executeTakeFirst();
 
     const controlledData = await withDataController(
-      parsedBody.data,
+      req.body,
       dataDef,
     ).execute();
 

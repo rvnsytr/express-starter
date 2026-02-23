@@ -1,7 +1,8 @@
 import { db } from "@/core/db";
-import { authorize } from "@/core/middlewares";
+import { authorize, validateRequest } from "@/core/middlewares";
+import { sharedSchemas } from "@/core/schema.zod";
 import { getPresignedUrl, removeFiles, uploadFiles } from "@/core/storage";
-import { formatZodError, transformKeys } from "@/core/utils/formaters";
+import { transformKeys } from "@/core/utils/formaters";
 import { Router } from "express";
 import multer from "multer";
 import z from "zod";
@@ -9,54 +10,46 @@ import { storageTableSchema } from "./schema";
 
 const router = Router();
 
-router.get("/", authorize({ storage: ["list"] }), async (req, res) => {
-  const parsedBody = z
-    .object({
-      url: z.coerce.boolean().optional().default(false),
+router.get(
+  "/",
+  authorize({ storage: ["list"] }),
+  validateRequest({
+    body: z.object({
+      url: sharedSchemas.boolean("URL").optional().default(false),
       category: storageTableSchema.shape.category.optional(),
-    })
-    .safeParse(req.query);
+    }),
+  }),
+  async (req, res) => {
+    const { url: withUrl, category } = req.body;
 
-  if (!parsedBody.success)
-    return res.api({ code: 400, ...formatZodError(parsedBody.error, true) });
+    let query = db.selectFrom("storage").selectAll();
+    if (category) query = query.where("category", "=", category);
 
-  const { url: withUrl, category } = parsedBody.data;
+    let result = await query.orderBy("created_at", (ob) => ob.desc()).execute();
 
-  let query = db.selectFrom("storage").selectAll();
-  if (category) query = query.where("category", "=", category);
+    if (withUrl) {
+      result = await Promise.all(
+        result.map(async (f) => {
+          const fileName = f.file_name;
+          const fileUrl = await getPresignedUrl(f.file_path, { fileName });
+          return { ...f, fileUrl };
+        }),
+      );
+    }
 
-  let result = await query.orderBy("created_at", (ob) => ob.desc()).execute();
-
-  if (withUrl) {
-    result = await Promise.all(
-      result.map(async (f) => {
-        const fileName = f.file_name;
-        const fileUrl = await getPresignedUrl(f.file_path, { fileName });
-        return { ...f, fileUrl };
-      }),
-    );
-  }
-
-  return res.api({ data: transformKeys(result, "camel") });
-});
+    return res.api({ data: transformKeys(result, "camel") });
+  },
+);
 
 router.post(
   "/presigned-url",
   authorize({ storage: ["get"] }),
+  validateRequest({ body: z.object({ data: z.string().array() }) }),
   async (req, res) => {
-    const parsedBody = z
-      .object({ data: z.string().array() })
-      .safeParse(req.body);
-
-    if (!parsedBody.success)
-      return res.api({ code: 400, ...formatZodError(parsedBody.error, true) });
-
-    const { data: keys } = parsedBody.data;
-
     const result = await db
       .selectFrom("storage")
       .select(["id", "file_path"])
-      .where("id", "in", keys)
+      .where("id", "in", req.body.data)
       .execute();
 
     const data = await Promise.all(
@@ -86,27 +79,19 @@ router.post(
   },
 );
 
-router.delete("/", authorize({ storage: ["delete"] }), async (req, res) => {
-  const parsedBody = z
-    .object({ ids: z.array(z.uuidv4()), userId: z.string() })
-    .safeParse(req.body);
-
-  if (!parsedBody.success)
-    return res.api({ code: 400, ...formatZodError(parsedBody.error, true) });
-
-  const queryParsed = z
-    .object({ by: z.enum(["id", "file_path"]).default("id") })
-    .safeParse(req.query);
-  if (!queryParsed.success)
-    return res.api({ code: 400, ...formatZodError(queryParsed.error, true) });
-
-  const { by } = queryParsed.data;
-  const { ids, userId } = parsedBody.data;
-
-  const remove = await removeFiles(ids, userId, { by });
-  if (!remove.success) return res.api({ code: 400, ...remove });
-
-  return res.api(remove);
-});
+router.delete(
+  "/",
+  authorize({ storage: ["delete"] }),
+  validateRequest({
+    query: z.object({ by: z.enum(["id", "file_path"]).default("id") }),
+    body: z.object({ ids: z.array(z.uuidv4()), userId: z.string() }),
+  }),
+  async (req, res) => {
+    const { ids, userId } = req.body;
+    const remove = await removeFiles(ids, userId, { by: req.query.by });
+    if (!remove.success) return res.api({ code: 400, ...remove });
+    return res.api(remove);
+  },
+);
 
 export { router };

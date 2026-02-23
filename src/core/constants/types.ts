@@ -5,11 +5,27 @@ export type OmitByType<T, V> = {
 };
 
 export type ActionResponse<T = null> = {
-  count?: { total: number } & Record<string, number>;
+  count?: ({ total: number } & Record<string, number>) | undefined;
 } & (
   | { success: true; data: T }
   | { success: false; message: string; error?: unknown }
 );
+
+export type ApiPayload<T = null> = Pick<ActionResponse, "count"> & {
+  code?: number;
+  success?: boolean;
+  message?: string;
+  data?: T;
+  error?: unknown;
+};
+
+export type RequestPart =
+  | "params"
+  | "query"
+  | "body"
+  | "headers"
+  | "cookies"
+  | "files";
 
 export type StringCase =
   | "kebab"

@@ -1,30 +1,24 @@
 import { APIError } from "better-auth";
 import { fromNodeHeaders } from "better-auth/node";
-import { ErrorRequestHandler, RequestHandler } from "express";
+import { ErrorRequestHandler, json, RequestHandler } from "express";
+import z from "zod";
 import { auth } from "./auth";
 import { messages } from "./constants/messages";
+import { ApiPayload, RequestPart } from "./constants/types";
 import { Permissions } from "./permission";
+import { formatZodError } from "./utils/formaters";
 import { delay } from "./utils/helpers";
-
-export type ApiResponse<T> = {
-  code: number;
-  success: boolean;
-  message: string;
-  count?: ({ total: number } & Record<string, number>) | undefined;
-  data: T;
-  error?: unknown;
-};
 
 export const init: RequestHandler = (_req, res, next) => {
   const nodeEnv = process.env.NODE_ENV ?? "local";
   const isShowError = nodeEnv === "local" || nodeEnv === "development";
 
-  res.api = <T>(payload?: Partial<ApiResponse<T>>) => {
+  res.api = <T>(payload?: ApiPayload<T>) => {
     const code = payload?.code ?? 200;
     const success = code >= 200 && code < 300;
     const count = payload?.count;
-    const data = payload?.data ?? null;
     const message = payload?.message ?? (success ? "Sukses" : messages.error);
+    const data = payload?.data ?? null;
     const error = isShowError ? payload?.error : undefined;
     return res.status(code).json({ success, message, count, data, error });
   };
@@ -67,4 +61,43 @@ export function authorize(permissions?: Permissions): RequestHandler {
       ? next()
       : res.api({ code: 403, message: messages.forbidden });
   };
+}
+
+export function validateRequest<
+  TParams = unknown,
+  TQuery = unknown,
+  TBody = unknown,
+>(schema: {
+  params?: z.ZodType<TParams>;
+  query?: z.ZodType<TQuery>;
+  body?: z.ZodType<TBody>;
+}): RequestHandler<TParams, unknown, TBody, TQuery> {
+  const jsonParser = json();
+  return (req, res, next) =>
+    jsonParser(req, res, (err) => {
+      if (err) return next(err);
+
+      const sendError = (zodError: z.ZodError, part: RequestPart) =>
+        res.api(formatZodError(zodError, { part, withPath: true }));
+
+      if (schema.params) {
+        const parsed = schema.params.safeParse(req.params);
+        if (!parsed.success) return sendError(parsed.error, "params");
+        req.params = parsed.data;
+      }
+
+      if (schema.query) {
+        const parsed = schema.query.safeParse(req.query);
+        if (!parsed.success) return sendError(parsed.error, "query");
+        req.query = parsed.data;
+      }
+
+      if (schema.body) {
+        const parsed = schema.body.safeParse(req.body);
+        if (!parsed.success) return sendError(parsed.error, "body");
+        req.body = parsed.data;
+      }
+
+      return next();
+    });
 }

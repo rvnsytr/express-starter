@@ -200,8 +200,8 @@ export const auth = betterAuth({
             return await removeFiles([oldImgId], user.id, { db: trx });
         });
 
-        if (res?.error)
-          throw new APIError("INTERNAL_SERVER_ERROR", { message: res.error });
+        if (res && !res.success)
+          throw new APIError("INTERNAL_SERVER_ERROR", { message: res.message });
       }
 
       if (ctx.path === "/change-password") {
