@@ -2,9 +2,11 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon --exec tsx src/index.ts",
-    "build": "tsup src/index.ts --format esm --dts",
+    "build": "tsdown src/index.ts --format esm --dts",
+    "build:bun": "tsc --noEmit --extendedDiagnostics && bun build src/index.ts --outdir dist --target node --format esm",
     "lint": "eslint .",
-    "start": "node dist/index.js"
+    "start": "node dist/index.mjs",
+    "start:bun": "node dist/index.js"
   },
   "dependencies": {
     "@novu/node": "^2.6.6",
@@ -33,7 +35,7 @@
     "nodemon": "^3.1.14",
     "prettier": "^3.8.1",
     "prettier-plugin-organize-imports": "^4.3.0",
-    "tsup": "^8.5.1",
+    "tsdown": "^0.20.3",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.56.0"
