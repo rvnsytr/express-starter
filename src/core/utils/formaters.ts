@@ -123,13 +123,21 @@ export function formatPhone(number: string | number, prefix?: "+62" | "0") {
   return `${prefix ?? ""} ${formatted}`.trim();
 }
 
+export type FormattedZodError<T> = {
+  message: string;
+  error: z.core.$ZodErrorTree<T, string>;
+};
+
 export function formatZodError<T>(
   zodError: z.ZodError<T>,
   withPath = false,
-): string {
-  const error = JSON.parse(zodError.message)[0];
-  if (withPath) return `${error.path}: ${error.message}`;
-  return error.message;
+): FormattedZodError<T> {
+  const firstIssue = zodError.issues[0];
+  const message =
+    withPath && firstIssue?.path.length
+      ? `[${firstIssue.path.join(".")}] ${firstIssue.message}`
+      : (firstIssue?.message ?? "Validation error");
+  return { message, error: z.treeifyError(zodError) };
 }
 
 export type FormatCsvRangeOptions = {

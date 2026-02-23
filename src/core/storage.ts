@@ -66,29 +66,29 @@ export async function uploadFiles(
   req: Request,
   options?: UploadFilesOptions,
 ): Promise<ActionResponse<UploadFilesData>> {
+  const type = options?.type ?? "file";
+
+  const parsedFile = sharedSchemas.files(type, options).safeParse(req.files);
+  if (!parsedFile.success)
+    return { success: false, ...formatZodError(parsedFile.error, true) };
+
+  const parsedQuery = z
+    .object({
+      url: z.coerce.boolean().optional().default(false),
+      fileName: z.string().optional(),
+      withExtension: sharedSchemas.boolean("No Extension").optional(),
+    })
+    .safeParse(req.query);
+  if (!parsedQuery.success)
+    return { success: false, ...formatZodError(parsedQuery.error, true) };
+
+  const parsedUserId = sharedSchemas
+    .string("Used ID", { min: 1 })
+    .safeParse(options?.userId ?? req.session?.user.id);
+  if (!parsedUserId.success)
+    return { success: false, ...formatZodError(parsedUserId.error, true) };
+
   try {
-    const type = options?.type ?? "file";
-
-    const parsedFile = sharedSchemas.files(type, options).safeParse(req.files);
-    if (!parsedFile.success)
-      throw new Error(formatZodError(parsedFile.error, true));
-
-    const parsedQuery = z
-      .object({
-        url: z.coerce.boolean().optional().default(false),
-        fileName: z.string().optional(),
-        withExtension: sharedSchemas.boolean("No Extension").optional(),
-      })
-      .safeParse(req.query);
-    if (!parsedQuery.success)
-      throw new Error(formatZodError(parsedQuery.error, true));
-
-    const parsedUserId = sharedSchemas
-      .string("Used ID", { min: 1 })
-      .safeParse(options?.userId ?? req.session?.user.id);
-    if (!parsedUserId.success)
-      throw new Error(formatZodError(parsedUserId.error));
-
     const { url: withUrl, fileName: fileNameInQuery } = parsedQuery.data;
 
     const overwriteByQuery = options?.overwriteByQuery ?? false;
@@ -194,11 +194,11 @@ export async function uploadFiles(
 
     return { success: true, count: { total: data.length }, data };
   } catch (e) {
-    const error =
+    const message =
       e instanceof Error
         ? e.message
         : "Terjadi kesalahan saat mengunggah file.";
-    return { success: false, error };
+    return { success: false, message, error: e };
   }
 }
 
@@ -218,33 +218,33 @@ export async function removeFiles(
   keys: string[],
   userId: string,
   options?: RemoveFilesOptions,
-) {
-  try {
-    const parsedUserId = sharedSchemas
-      .string("Used ID", { min: 1 })
-      .safeParse(userId);
-    if (!parsedUserId.success)
-      throw new Error(formatZodError(parsedUserId.error));
+): Promise<ActionResponse> {
+  const parsedUserId = sharedSchemas
+    .string("Used ID", { min: 1 })
+    .safeParse(userId);
+  if (!parsedUserId.success)
+    return { success: false, ...formatZodError(parsedUserId.error) };
 
+  try {
     const deletedBy = parsedUserId.data;
     const searchBy = options?.by ?? "id";
     const database = options?.db ?? db;
     const isDisabled = options?.disabled ?? false;
 
-    let count = 0;
+    let total = 0;
     if (!isDisabled) {
       const { numUpdatedRows } = await database
         .updateTable("storage")
         .set({ deleted_by: deletedBy, deleted_at: new Date() })
         .where(searchBy, "in", keys)
         .executeTakeFirst();
-      count = Number(numUpdatedRows);
+      total = Number(numUpdatedRows);
     }
 
-    return { count, error: null };
+    return { success: true, count: { total }, data: null };
   } catch (e) {
-    const error =
+    const message =
       e instanceof Error ? e.message : "Terjadi kesalahan saat menghapus file.";
-    return { count: 0, error };
+    return { success: false, count: { total: 0 }, message, error: e };
   }
 }

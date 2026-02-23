@@ -16,10 +16,8 @@ const router = Router();
 
 router.post("/", authorize({ event_log: ["list"] }), async (req, res) => {
   const parsedBody = dataControllerSchema.safeParse(req.body);
-  if (!parsedBody.success) {
-    const message = formatZodError(parsedBody.error, true);
-    return res.api({ code: 400, message });
-  }
+  if (!parsedBody.success)
+    return res.api({ code: 400, ...formatZodError(parsedBody.error, true) });
 
   const dataDef = getEventLogWDCConfig();
 
@@ -36,7 +34,12 @@ router.post("/", authorize({ event_log: ["list"] }), async (req, res) => {
 router.post("/me", authorize({ event_log: ["list:own"] }), async (req, res) => {
   const authUserId = req.session?.user.id;
   if (!authUserId) return res.api({ code: 400 });
-  const json = await getEventLogById(req.body, authUserId);
+
+  const parsedBody = dataControllerSchema.safeParse(req.body);
+  if (!parsedBody.success)
+    return res.api({ code: 400, ...formatZodError(parsedBody.error) });
+
+  const json = await getEventLogById(parsedBody.data, authUserId);
   return res.api(json);
 });
 
@@ -46,15 +49,13 @@ router.post(
   async (req, res) => {
     const parsedParams = z.object({ id: z.string() }).safeParse(req.params);
     if (!parsedParams.success)
-      return res.api({ message: formatZodError(parsedParams.error) });
+      return res.api({ code: 400, ...formatZodError(parsedParams.error) });
 
     const parsedBody = dataControllerSchema.safeParse(req.body);
-    if (!parsedBody.success) {
-      const message = formatZodError(parsedBody.error);
-      return res.api({ code: 400, message });
-    }
+    if (!parsedBody.success)
+      return res.api({ code: 400, ...formatZodError(parsedBody.error) });
 
-    const json = await getEventLogById(req.body, parsedParams.data.id);
+    const json = await getEventLogById(parsedBody.data, parsedParams.data.id);
     return res.api(json);
   },
 );

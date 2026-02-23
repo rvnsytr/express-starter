@@ -17,10 +17,8 @@ router.get("/", authorize({ storage: ["list"] }), async (req, res) => {
     })
     .safeParse(req.query);
 
-  if (!parsedBody.success) {
-    const message = formatZodError(parsedBody.error, true);
-    return res.api({ code: 400, message });
-  }
+  if (!parsedBody.success)
+    return res.api({ code: 400, ...formatZodError(parsedBody.error, true) });
 
   const { url: withUrl, category } = parsedBody.data;
 
@@ -50,10 +48,8 @@ router.post(
       .object({ data: z.string().array() })
       .safeParse(req.body);
 
-    if (!parsedBody.success) {
-      const message = formatZodError(parsedBody.error, true);
-      return res.api({ code: 400, message });
-    }
+    if (!parsedBody.success)
+      return res.api({ code: 400, ...formatZodError(parsedBody.error, true) });
 
     const { data: keys } = parsedBody.data;
 
@@ -84,7 +80,8 @@ router.post(
       min: 1,
       // disabled: true,
     });
-    if (!upload.success) return res.api({ code: 400, message: upload.error });
+    if (!upload.success) return res.api({ code: 400, ...upload });
+
     return res.api(upload);
   },
 );
@@ -94,24 +91,22 @@ router.delete("/", authorize({ storage: ["delete"] }), async (req, res) => {
     .object({ ids: z.array(z.uuidv4()), userId: z.string() })
     .safeParse(req.body);
 
-  if (!parsedBody.success) {
-    const message = formatZodError(parsedBody.error, true);
-    return res.api({ code: 400, message });
-  }
+  if (!parsedBody.success)
+    return res.api({ code: 400, ...formatZodError(parsedBody.error, true) });
 
   const queryParsed = z
     .object({ by: z.enum(["id", "file_path"]).default("id") })
     .safeParse(req.query);
   if (!queryParsed.success)
-    return res.api({ code: 400, message: formatZodError(queryParsed.error) });
+    return res.api({ code: 400, ...formatZodError(queryParsed.error, true) });
 
   const { by } = queryParsed.data;
   const { ids, userId } = parsedBody.data;
 
-  const { count, error } = await removeFiles(ids, userId, { by });
-  if (error) return res.api({ code: 400, message: error });
+  const remove = await removeFiles(ids, userId, { by });
+  if (!remove.success) return res.api({ code: 400, ...remove });
 
-  return res.api({ count: { total: count } });
+  return res.api(remove);
 });
 
 export { router };

@@ -1,10 +1,10 @@
 import {
-  dataControllerSchema,
+  DataController,
   defineWDCConfig,
   withDataController,
 } from "@/core/data-controller";
 import { countWhere, db } from "@/core/db";
-import { formatZodError, transformKeys } from "@/core/utils/formaters";
+import { transformKeys } from "@/core/utils/formaters";
 import { allEventLogType } from "./constants";
 
 const eventLogQuery = db.selectFrom("event_log as el").select((eb) => [
@@ -54,22 +54,15 @@ export function getEventLogWDCConfig(
   });
 }
 
-export async function getEventLogById(
-  reqBody: Record<string, unknown>,
-  id: string,
-) {
-  const parsedBody = dataControllerSchema.safeParse(reqBody);
-  if (!parsedBody.success)
-    return { code: 400, message: formatZodError(parsedBody.error, true) };
-
+export async function getEventLogById(dc: DataController, id: string) {
   const dataDef = getEventLogWDCConfig((qb) => qb.where("el.user_id", "=", id));
 
-  const count = await withDataController(parsedBody.data, {
+  const count = await withDataController(dc, {
     queryBuilder: eventLogCountQuery.where("el.user_id", "=", id),
     config: { ...dataDef.config, disabled: ["sorting", "pagination"] },
   }).executeTakeFirst();
 
-  const data = await withDataController(parsedBody.data, dataDef).execute();
+  const data = await withDataController(dc, dataDef).execute();
 
   return { count, data: transformKeys(data, "camel") };
 }

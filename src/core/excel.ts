@@ -39,7 +39,7 @@ export async function readExcelSheet<S extends ZodType>(
     .safeParse(config.reqBody);
 
   if (!parsedConfig.success)
-    return { success: false, error: formatZodError(parsedConfig.error, true) };
+    return { success: false, ...formatZodError(parsedConfig.error, true) };
 
   const { sheet: rawSheet, skipRows, source } = parsedConfig.data;
   const sheet = !!rawSheet ? rawSheet : "Sheet1";
@@ -53,34 +53,39 @@ export async function readExcelSheet<S extends ZodType>(
   await workbook.xlsx.readFile(inputPath);
   const worksheet = workbook.getWorksheet(sheet);
   if (!worksheet)
-    return { success: false, error: `Worksheet '${sheet}' tidak ditemukan.` };
+    return { success: false, message: `Worksheet '${sheet}' tidak ditemukan.` };
 
   let errorMessage: string | null = null;
   const data: z.infer<S>[] = [];
 
   worksheet.eachRow((row, rowNumber) => {
-    if (!Array.isArray(row.values) || skipRows.includes(rowNumber)) return;
+    if (
+      !Array.isArray(row.values) ||
+      skipRows.includes(rowNumber) ||
+      !!errorMessage
+    )
+      return;
 
     const parsedRow = config.schema.safeParse(
       Object.fromEntries(
         Object.entries(source)
-          .map(([k, i]) => {
-            if (!Array.isArray(row.values) || typeof i !== "number")
-              return null;
-            return [k, row.values[i] ?? null];
-          })
+          .map(([k, i]) =>
+            !Array.isArray(row.values) || typeof i !== "number"
+              ? null
+              : [k, row.values[i] ?? null],
+          )
           .filter((v) => !!v),
       ),
     );
 
     if (!parsedRow.success)
-      return (errorMessage = `Baris ke ${rowNumber}: ${formatZodError(parsedRow.error)}`);
+      return (errorMessage = `Baris ke ${rowNumber}: ${formatZodError(parsedRow.error).message}`);
 
     data.push(parsedRow.data);
   });
 
   promises.unlink(inputPath);
 
-  if (errorMessage) return { success: false, error: errorMessage };
+  if (errorMessage) return { success: false, message: errorMessage };
   return { success: true, data };
 }

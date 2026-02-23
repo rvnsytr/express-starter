@@ -19,10 +19,8 @@ router.post(
   json(),
   async (req, res) => {
     const parsedBody = dataControllerSchema.safeParse(req.body);
-    if (!parsedBody.success) {
-      const message = formatZodError(parsedBody.error, true);
-      return res.api({ code: 400, message });
-    }
+    if (!parsedBody.success)
+      return res.api({ code: 400, ...formatZodError(parsedBody.error, true) });
 
     const baseQb = db
       .selectFrom("user as u")

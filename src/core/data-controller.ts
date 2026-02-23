@@ -10,6 +10,7 @@ import {
 import z from "zod";
 import { allFilterOperators, FilterOperators } from "./constants/data-filter";
 
+export type DataController = z.infer<typeof dataControllerSchema>;
 export const dataControllerSchema = z
   .object({
     globalFilter: z.string().default(""),
@@ -38,8 +39,6 @@ export const dataControllerSchema = z
     pagination: { pageIndex: 0, pageSize: 10 },
   });
 
-type DataControllerState = z.infer<typeof dataControllerSchema>;
-
 type WDCColumnConfig<DB, TB extends keyof DB> = {
   column: ReferenceExpression<DB, TB>;
 } & (
@@ -52,7 +51,7 @@ type WDCColumnConfig<DB, TB extends keyof DB> = {
 type WithDataController<DB, TB extends keyof DB, O> = {
   queryBuilder: SelectQueryBuilder<DB, TB, O>;
   config: {
-    disabled?: (keyof DataControllerState)[];
+    disabled?: (keyof DataController)[];
     columns: Record<string, WDCColumnConfig<DB, TB>>;
     defaultOrderBy: { column: ReferenceExpression<DB, TB>; desc: boolean };
   };
@@ -63,7 +62,7 @@ export const defineWDCConfig = <DB, TB extends keyof DB, O>(
 ) => config;
 
 export function withDataController<DB, TB extends keyof DB, O>(
-  state: DataControllerState,
+  state: DataController,
   definition: WithDataController<DB, TB, O>,
 ) {
   let qb = definition.queryBuilder;

@@ -65,3 +65,4 @@ export type Database = {
 };
 
 export type StorageTable = Selectable<Database["storage"]>;
+export type EventLogTable = Selectable<Database["event_log"]>;
