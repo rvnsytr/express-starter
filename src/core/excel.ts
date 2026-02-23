@@ -6,23 +6,28 @@ import { ActionResponse } from "./constants/types";
 import { sharedSchemas } from "./schema.zod";
 import { formatZodError } from "./utils/formaters";
 
+type ReadExcelSheetMode = (typeof allReadExcelSheetModes)[number];
+const allReadExcelSheetModes = ["include", "exclude"] as const;
+
 export async function readExcelSheet<S extends ZodType>(
-  file: Pick<Express.Multer.File, "originalname" | "buffer">,
+  files: Pick<Express.Multer.File, "originalname" | "buffer">[],
   config: {
     schema: S;
     source: Record<keyof z.infer<S>, number>;
     reqBody?: Record<string, unknown>;
     sheet?: string;
-    skipRows?: number[];
+    mode?: ReadExcelSheetMode;
+    rows?: number[];
   },
 ): Promise<ActionResponse<z.infer<S>[]>> {
   const parsedConfig = z
     .object({
       sheet: sharedSchemas.string("Worksheet").optional(),
-      skipRows: sharedSchemas
+      mode: z.enum(allReadExcelSheetModes).default(config.mode ?? "include"),
+      rows: sharedSchemas
         .jsonString(z.number().array().optional())
         .optional()
-        .default(config.skipRows ?? []),
+        .default(config.rows ?? []),
       source: sharedSchemas
         .jsonString(
           z.object(
@@ -41,51 +46,57 @@ export async function readExcelSheet<S extends ZodType>(
   if (!parsedConfig.success)
     return formatZodError(parsedConfig.error, { withPath: true });
 
-  const { sheet: rawSheet, skipRows, source } = parsedConfig.data;
+  const { sheet: rawSheet, mode, rows, source } = parsedConfig.data;
   const sheet = !!rawSheet ? rawSheet : "Sheet1";
 
   const tmpDir = path.join(process.cwd(), "tmp");
   await promises.mkdir(tmpDir, { recursive: true });
-  const inputPath = path.join(tmpDir, `${Date.now()}-${file.originalname}`);
-  await promises.writeFile(inputPath, file.buffer);
 
-  const workbook = new Excel.Workbook();
-  await workbook.xlsx.readFile(inputPath);
-  const worksheet = workbook.getWorksheet(sheet);
-  if (!worksheet)
-    return { success: false, message: `Worksheet '${sheet}' tidak ditemukan.` };
-
-  let errorMessage: string | null = null;
   const data: z.infer<S>[] = [];
+  let errorMessage: string | null = null;
 
-  worksheet.eachRow((row, rowNumber) => {
-    if (
-      !Array.isArray(row.values) ||
-      skipRows.includes(rowNumber) ||
-      !!errorMessage
-    )
-      return;
+  for (const file of files) {
+    const inputPath = path.join(tmpDir, `${Date.now()}-${file.originalname}`);
+    await promises.writeFile(inputPath, file.buffer);
 
-    const parsedRow = config.schema.safeParse(
-      Object.fromEntries(
-        Object.entries(source)
-          .map(([k, i]) =>
-            !Array.isArray(row.values) || typeof i !== "number"
-              ? null
-              : [k, row.values[i] ?? null],
-          )
-          .filter((v) => !!v),
-      ),
-    );
+    const workbook = new Excel.Workbook();
+    await workbook.xlsx.readFile(inputPath);
+    const worksheet = workbook.getWorksheet(sheet);
 
-    if (!parsedRow.success)
-      return (errorMessage = `Baris ke ${rowNumber}: ${formatZodError(parsedRow.error).message}`);
+    if (!worksheet) {
+      const message = `Worksheet '${sheet}' tidak ditemukan.`;
+      return { success: false, message };
+    }
 
-    data.push(parsedRow.data);
-  });
+    worksheet.eachRow((row, rowNumber) => {
+      const isRowSkip =
+        mode === "include"
+          ? !rows.includes(rowNumber)
+          : rows.includes(rowNumber);
+      if (!Array.isArray(row.values) || isRowSkip || !!errorMessage) return;
 
-  promises.unlink(inputPath);
+      const parsedRow = config.schema.safeParse(
+        Object.fromEntries(
+          Object.entries(source)
+            .map(([k, i]) => {
+              if (!Array.isArray(row.values) || typeof i !== "number")
+                return null;
+              return [k, row.values[i] ?? null];
+            })
+            .filter((v) => !!v),
+        ),
+      );
 
-  if (errorMessage) return { success: false, message: errorMessage };
+      if (!parsedRow.success)
+        return (errorMessage = `Baris ke ${rowNumber}: ${formatZodError(parsedRow.error)}`);
+
+      data.push(parsedRow.data);
+    });
+
+    promises.unlink(inputPath);
+
+    if (errorMessage) return { success: false, message: errorMessage };
+  }
+
   return { success: true, data };
 }
