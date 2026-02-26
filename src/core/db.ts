@@ -8,6 +8,7 @@ export type DBConfig = {
   username?: string;
   password?: string;
   database?: string;
+  port?: string;
 };
 
 export function createDialect(config?: DBConfig) {
@@ -15,6 +16,7 @@ export function createDialect(config?: DBConfig) {
   const userName = config?.username ?? process.env.DB_USERNAME!;
   const password = config?.password ?? process.env.DB_PASSWORD!;
   const database = config?.database ?? process.env.DB_NAME!;
+  const port = Number(config?.port ?? process.env.DB_PORT!);
 
   return new MssqlDialect({
     tarn: { ...tarn, options: { min: 0, max: 10 } },
@@ -24,7 +26,7 @@ export function createDialect(config?: DBConfig) {
         new tedious.Connection({
           server: host,
           authentication: { type: "default", options: { userName, password } },
-          options: { database, trustServerCertificate: true, port: 1433 },
+          options: { database, trustServerCertificate: true, port },
         }),
     },
   });

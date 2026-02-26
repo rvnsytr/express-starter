@@ -1,5 +1,5 @@
 import { appMeta } from "@/core/constants/app";
-import { fileMeta, FileType } from "@/core/constants/file";
+import { allFileTypes, fileMeta } from "@/core/constants/file";
 import { ActionResponse } from "@/core/constants/types";
 import { db } from "@/core/db";
 import { Database, StorageTable } from "@/core/schema.db";
@@ -11,6 +11,7 @@ import { Request } from "express";
 import { Kysely } from "kysely";
 import { Client } from "minio";
 import z from "zod";
+import { messages } from "./constants/messages";
 
 const bucket = process.env.AWS_BUCKET!;
 const defaultDirectory =
@@ -34,26 +35,33 @@ type UploadFilesData = {
   fileUrl?: string;
 }[];
 
-export type UploadFilesOptions = {
-  type?: FileType;
+const baseOptionSchema = z.object({
+  fileType: z.enum(allFileTypes).default("file"),
+  fileName: z.string().min(1).optional(),
+
+  unique: sharedSchemas.boolean().default(false),
+  prefix: z.string().default(""),
+  suffix: z.string().default(""),
+
+  min: z.coerce.number().catch(0),
+  max: z.coerce.number().catch(0),
+  maxFileSize: z.coerce.number().catch(0),
+
+  url: sharedSchemas.boolean().default(false),
+  withExtension: sharedSchemas.boolean().default(true),
+});
+
+type BaseUploadFilesOption = z.infer<typeof baseOptionSchema>;
+
+export type UploadFilesOptions = Partial<BaseUploadFilesOption> & {
   userId?: string;
+
   db?: Kysely<Database>;
-
-  min?: number;
-  max?: number;
-  maxFileSize?: number;
-
-  unique?: boolean;
-  prefix?: string;
-  suffix?: string;
-
-  fileName?: string;
-  fileCategory?: StorageTable["category"];
-  withExtension?: boolean;
-
-  overwriteByQuery?: boolean;
+  category?: StorageTable["category"];
   directory?: string;
-  disabled?: boolean;
+
+  allowBodyOverride?: boolean;
+  enabled?: boolean;
 };
 
 export type RemoveFilesOptions = {
@@ -62,135 +70,135 @@ export type RemoveFilesOptions = {
   disabled?: boolean;
 };
 
+// TODO : Validate Request
 export async function uploadFiles(
   req: Request,
   options?: UploadFilesOptions,
 ): Promise<ActionResponse<UploadFilesData>> {
-  const type = options?.type ?? "file";
+  if (!req.body || !req.files)
+    return { success: false, message: `[req] ${messages.invalid("Request")}` };
 
-  const parsedFile = sharedSchemas.files(type, options).safeParse(req.files);
-  if (!parsedFile.success)
-    return formatZodError(parsedFile.error, { part: "files", withPath: true });
+  const rawBaseOptions = Object.fromEntries(
+    Object.keys(baseOptionSchema.shape).map((k) => {
+      const optionValue = options?.[k as keyof UploadFilesOptions];
+      const value = options?.allowBodyOverride
+        ? (req.body[k] ?? optionValue)
+        : optionValue;
+      return [k, value];
+    }),
+  );
 
-  const parsedQuery = z
-    .object({
-      url: z.coerce.boolean().optional().default(false),
-      fileName: z.string().optional(),
-      withExtension: sharedSchemas.boolean("No Extension").optional(),
-    })
-    .safeParse(req.query);
-  if (!parsedQuery.success)
-    return formatZodError(parsedQuery.error, { withPath: true });
+  const parsedBaseOptions = baseOptionSchema.safeParse(rawBaseOptions);
+  if (!parsedBaseOptions.success)
+    return formatZodError(parsedBaseOptions.error, { withPath: true });
+
+  const resolvedOptions = { ...options, ...parsedBaseOptions.data };
 
   const parsedUserId = sharedSchemas
     .string("Used ID", { min: 1 })
     .safeParse(options?.userId ?? req.session?.user.id);
   if (!parsedUserId.success) return formatZodError(parsedUserId.error);
 
-  try {
-    const { url: withUrl, fileName: fileNameInQuery } = parsedQuery.data;
+  const parsedFile = sharedSchemas
+    .files(resolvedOptions.fileType, resolvedOptions)
+    .safeParse(req.files);
+  if (!parsedFile.success)
+    return formatZodError(parsedFile.error, { part: "files", withPath: true });
 
-    const overwriteByQuery = options?.overwriteByQuery ?? false;
-    const database = options?.db ?? db;
-    const isDisabled = options?.disabled ?? false;
-    const userId = parsedUserId.data;
+  const userId = parsedUserId.data;
+  const database = options?.db ?? db;
+  const isEnabled = options?.enabled ?? true;
 
-    const withExtension =
-      parsedQuery.data.withExtension ?? options?.withExtension ?? true;
+  const data = await Promise.all(
+    parsedFile.data.map(async (file) => {
+      const {
+        fieldname,
+        originalname,
+        mimetype: mimeType,
+        size: fileSize,
+        buffer,
+      } = file;
 
-    const fileNameOption = overwriteByQuery
-      ? (fileNameInQuery ?? options?.fileName)
-      : options?.fileName;
+      const categoryParse = storageTableSchema
+        .pick({ category: true })
+        .safeParse({ category: resolvedOptions.category ?? fieldname });
 
-    const data = await Promise.all(
-      parsedFile.data.map(async (file) => {
-        const {
-          fieldname,
-          originalname,
-          mimetype: mimeType,
-          size: fileSize,
-          buffer,
-        } = file;
+      if (!categoryParse.success) {
+        const { displayName } = fileMeta[resolvedOptions.fileType];
+        const message = `Kategori ${displayName} tidak valid pada field '${fieldname}'.`;
+        throw new Error(message);
+      }
 
-        const categoryParse = storageTableSchema
-          .pick({ category: true })
-          .safeParse({ category: options?.fileCategory ?? fieldname });
+      let id = crypto.randomUUID().toUpperCase();
+      const { fileName: originalFileName, extension } =
+        getFileParts(originalname);
 
-        if (!categoryParse.success) {
-          const { displayName } = fileMeta[type];
-          const message = `Kategori ${displayName} tidak valid pada field '${fieldname}'.`;
-          throw new Error(message);
-        }
+      const now = resolvedOptions.unique ? Date.now().toString() : "";
+      const prefix = resolvedOptions.prefix;
+      const suffix = resolvedOptions.suffix;
+      const fileName = resolvedOptions.fileName
+        ? `${prefix}${resolvedOptions.fileName}${now}${suffix}`
+        : `${prefix}${originalFileName}${now}${suffix}`;
 
-        let id = crypto.randomUUID().toUpperCase();
-        const { fileName: originalFileName, extension } =
-          getFileParts(originalname);
+      const directory = resolvedOptions.directory ?? defaultDirectory;
+      const category = categoryParse.data.category;
+      const filePath = `${directory}/${category}/${fileName}${resolvedOptions.withExtension ? `.${extension}` : ""}`;
 
-        const now = options?.unique ? Date.now().toString() : "";
-        const prefix = options?.prefix ?? "";
-        const suffix = options?.suffix ?? "";
-        const fileName = fileNameOption
-          ? `${prefix}${fileNameOption}${now}${suffix}`
-          : `${prefix}${originalFileName}${now}${suffix}`;
+      if (isEnabled) {
+        const exists = await database
+          .selectFrom("storage")
+          .select("id")
+          .where("file_path", "=", filePath)
+          .executeTakeFirst();
 
-        const directory = options?.directory ?? defaultDirectory;
-        const category = categoryParse.data.category;
-        const filePath = `${directory}/${category}/${fileName}${withExtension ? `.${extension}` : ""}`;
-
-        let fileUrl = undefined;
-
-        if (!isDisabled) {
-          const exists = await database
-            .selectFrom("storage")
-            .select("id")
-            .where("file_path", "=", filePath)
+        if (exists) {
+          id = exists.id;
+          await database
+            .updateTable("storage")
+            .set("file_size", fileSize)
+            .set("deleted_by", null)
+            .set("deleted_at", null)
+            .set("updated_by", userId)
+            .set("updated_at", new Date())
+            .where("id", "=", id)
             .executeTakeFirst();
-
-          if (exists) {
-            id = exists.id;
-            await database
-              .updateTable("storage")
-              .set("file_size", fileSize)
-              .set("deleted_by", null)
-              .set("deleted_at", null)
-              .set("updated_by", userId)
-              .set("updated_at", new Date())
-              .where("id", "=", id)
-              .executeTakeFirst();
-          } else {
-            await database
-              .insertInto("storage")
-              .values({
-                id,
-                file_name: fileName,
-                category: category,
-                file_path: filePath,
-                mime_type: mimeType,
-                file_size: fileSize,
-                created_by: userId,
-              })
-              .executeTakeFirst();
-          }
-
-          await s3.putObject(bucket, filePath, buffer, fileSize, {
-            "Content-Type": mimeType,
-          });
-
-          if (withUrl) fileUrl = await getPresignedUrl(filePath, { fileName });
+        } else {
+          await database
+            .insertInto("storage")
+            .values({
+              id,
+              file_name: fileName,
+              category: category,
+              file_path: filePath,
+              mime_type: mimeType,
+              file_size: fileSize,
+              created_by: userId,
+            })
+            .executeTakeFirst();
         }
 
-        return {
-          id,
-          fileName,
-          category,
-          filePath,
-          mimeType,
-          fileSize,
-          ...(fileUrl ? { fileUrl } : {}),
-        };
-      }),
-    );
+        await s3.putObject(bucket, filePath, buffer, fileSize, {
+          "Content-Type": mimeType,
+        });
+      }
 
+      const fileUrl = resolvedOptions.url
+        ? await getPresignedUrl(filePath, { fileName })
+        : undefined;
+
+      return {
+        id,
+        fileName,
+        category,
+        filePath,
+        mimeType,
+        fileSize,
+        ...(fileUrl ? { fileUrl } : {}),
+      };
+    }),
+  );
+
+  try {
     return { success: true, count: { total: data.length }, data };
   } catch (e) {
     const message =
