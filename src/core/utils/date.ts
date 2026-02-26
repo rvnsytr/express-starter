@@ -36,6 +36,19 @@ export function formatDate(date: Date, formatStr: string) {
   return format(date, formatStr, { locale });
 }
 
+export function formatDateRange(start: Date, end: Date) {
+  const sameMonth = start.getMonth() === end.getMonth();
+  const sameYear = start.getFullYear() === end.getFullYear();
+
+  if (sameMonth && sameYear)
+    return `${formatDate(start, "MMM d")} - ${formatDate(end, "d, yyyy")}`;
+
+  if (sameYear)
+    return `${formatDate(start, "MMM d")} - ${formatDate(end, "MMM d, yyyy")}`;
+
+  return `${formatDate(start, "MMM d, yyyy")} - ${formatDate(end, "MMM d, yyyy")}`;
+}
+
 export function formatDateDistanceToNow(date: Date) {
   return formatDistanceToNow(date, { locale });
 }

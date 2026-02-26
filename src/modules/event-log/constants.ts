@@ -3,6 +3,7 @@ export const allEventLogType = [
   "user-registered",
   "user-created",
   // "user-imported",
+  // "user-activated",
   "user-verified",
   "user-banned",
   "user-unbanned",
