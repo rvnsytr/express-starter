@@ -22,7 +22,7 @@ export async function readExcelSheet<S extends ZodType>(
 ): Promise<ActionResponse<z.infer<S>[]>> {
   const parsedConfig = z
     .object({
-      sheet: sharedSchemas.string("Worksheet").optional(),
+      sheet: sharedSchemas.string().optional(),
       mode: z.enum(allReadExcelSheetModes).default(config.mode ?? "include"),
       rows: sharedSchemas
         .jsonString(z.number().array().optional())

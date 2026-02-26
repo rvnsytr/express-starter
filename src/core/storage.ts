@@ -93,9 +93,10 @@ export async function uploadFiles(
   const resolvedOptions = { ...options, ...parsedBaseOptions.data };
 
   const parsedUserId = sharedSchemas
-    .string("Used ID", { min: 1 })
+    .string({ min: 1 })
     .safeParse(options?.userId ?? req.session?.user.id);
-  if (!parsedUserId.success) return formatZodError(parsedUserId.error);
+  if (!parsedUserId.success)
+    return { success: false, message: `[userId]: ${messages.unauthorized}` };
 
   const parsedFiles = sharedSchemas
     .files(resolvedOptions.fileType, resolvedOptions)

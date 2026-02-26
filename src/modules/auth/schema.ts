@@ -11,7 +11,7 @@ import z from "zod";
 
 export const userSchema = betterAuthUserSchema.extend({
   email: sharedSchemas.email,
-  name: sharedSchemas.string("Nama", { min: 1 }),
+  name: sharedSchemas.string({ min: 1 }),
   image: z.string().optional().nullable(),
   role: z.lazy(() => z.enum(allRoles)),
   banned: z.boolean().default(false),

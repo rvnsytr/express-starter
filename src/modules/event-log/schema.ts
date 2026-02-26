@@ -10,7 +10,7 @@ export const eventLogTableSchema = z.object({
 
   type: z.enum(allEventLogType, { error: messages.invalid("Event type") }),
   entity_id: z.uuidv4().nullable().default(null),
-  data: sharedSchemas.string("data", { max: 255 }).nullable().default(null),
+  data: sharedSchemas.string({ max: 255 }).nullable().default(null),
 
-  created_at: sharedSchemas.date("created_at"),
+  created_at: z.coerce.date(),
 });
