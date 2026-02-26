@@ -10,10 +10,10 @@ export const storageTableSchema = z.object({
   mime_type: sharedSchemas.string({ max: 100 }),
   file_size: z.number(),
 
-  deleted_at: z.coerce.date().nullable().default(null),
-  deleted_by: sharedSchemas.string().nullable().default(null),
-  updated_at: z.coerce.date().nullable().default(null),
-  updated_by: sharedSchemas.string().nullable().default(null),
-  created_at: z.coerce.date(),
-  created_by: sharedSchemas.string(),
+  deleted_at: z.date().nullable().default(null),
+  deleted_by: z.string().nullable().default(null),
+  updated_at: z.date().nullable().default(null),
+  updated_by: z.string().nullable().default(null),
+  created_at: z.date(),
+  created_by: z.string(),
 });

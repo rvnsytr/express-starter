@@ -12,5 +12,5 @@ export const eventLogTableSchema = z.object({
   entity_id: z.uuidv4().nullable().default(null),
   data: sharedSchemas.string({ max: 255 }).nullable().default(null),
 
-  created_at: z.coerce.date(),
+  created_at: z.date(),
 });
