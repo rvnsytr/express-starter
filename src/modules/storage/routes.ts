@@ -69,13 +69,13 @@ router.post(
   multer().any(),
   async (req, res) => {
     const upload = await uploadFiles(req, {
-      overwriteByQuery: true,
-      min: 1,
-      // disabled: true,
+      allowBodyOverride: true,
+      // enabled: false,
     });
     if (!upload.success) return res.api({ code: 400, ...upload });
 
-    return res.api(upload);
+    const code = upload.success ? 200 : 400;
+    return res.api({ code, ...upload });
   },
 );
 

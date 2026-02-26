@@ -1,16 +1,18 @@
 import { toBytes } from "../utils/formaters";
 
-export type FileType =
-  | "file"
-  | "image"
-  | "pdf"
-  | "document"
-  | "spreadsheet"
-  | "presentation"
-  | "office"
-  | "archive"
-  | "audio"
-  | "video";
+export type FileType = (typeof allFileTypes)[number];
+export const allFileTypes = [
+  "file",
+  "image",
+  "pdf",
+  "document",
+  "spreadsheet",
+  "presentation",
+  "office",
+  "archive",
+  "audio",
+  "video",
+] as const;
 
 type FileMetaProps = Record<
   FileType,

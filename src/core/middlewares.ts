@@ -63,6 +63,7 @@ export function authorize(permissions?: Permissions): RequestHandler {
   };
 }
 
+// TODO: Files validation
 export function validateRequest<
   TParams = unknown,
   TQuery = unknown,

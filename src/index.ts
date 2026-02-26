@@ -21,8 +21,6 @@ app.use(init);
 
 app.use("/api/auth", authRoutes);
 
-app.use(express.json());
-
 app.get("/api", (_, res) => res.api({ message: `Hello, ${appMeta.name}` }));
 app.use("/api/storage", storageRoutes);
 app.use("/api/event-log", eventLogRoutes);
@@ -30,6 +28,6 @@ app.use("/api/event-log", eventLogRoutes);
 app.all("/*splat", notFoundHandler);
 app.use(errorHandler);
 
-app.listen(port, () =>
-  console.log(`Server running at http://localhost:${port}`),
-);
+app.listen(port, () => {
+  console.log(`Server running at http://localhost:${port}`);
+});

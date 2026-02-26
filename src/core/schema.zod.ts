@@ -17,8 +17,8 @@ export const sharedSchemas = {
     const { invalid, required } = messages;
     const { tooShort, tooLong } = messages.string;
 
-    const min = options?.min;
-    const max = options?.max;
+    const min = options?.min ?? 0;
+    const max = options?.max ?? 0;
     const sanitize = options?.sanitize ?? true;
     const withRequired = options?.withRequired ?? true;
 
@@ -27,12 +27,12 @@ export const sharedSchemas = {
     if (sanitize)
       schema = schema.regex(/^$|[A-Za-z0-9]/, { message: invalid(field) });
 
-    if (min) {
+    if (min > 0) {
       const message = min <= 1 && withRequired ? required : tooShort;
       schema = schema.min(min, { error: message(field, min) });
     }
 
-    if (max) {
+    if (max > 0) {
       const message = tooLong(field, max);
       schema = schema.max(max, { error: message });
     }
@@ -47,18 +47,18 @@ export const sharedSchemas = {
     const { invalid, required } = messages;
     const { tooSmall, tooLarge } = messages.number;
 
-    const min = options?.min;
-    const max = options?.max;
+    const min = options?.min ?? 0;
+    const max = options?.max ?? 0;
     const withRequired = options?.withRequired ?? true;
 
     let schema = z.coerce.number({ error: invalid(field) });
 
-    if (min) {
+    if (min > 0) {
       const message = min <= 1 && withRequired ? required : tooSmall;
       schema = schema.min(min, { error: message(field, min) });
     }
 
-    if (max) {
+    if (max > 0) {
       const message = tooLarge(field, max);
       schema = schema.max(max, { error: message });
     }
@@ -66,13 +66,14 @@ export const sharedSchemas = {
     return schema;
   },
 
-  boolean: (field: string) =>
-    z
-      .union([z.boolean(), z.string()], { error: messages.invalid(field) })
-      .transform((v) => {
-        if (typeof v === "boolean") return v;
-        return v === "true" || v === "1";
-      }),
+  boolean: (field?: string) => {
+    const error = field ? messages.invalid(field) : undefined;
+    return z
+      .union([z.boolean(), z.string()], { error })
+      .transform((v) =>
+        typeof v === "boolean" ? v : v === "true" || v === "1",
+      );
+  },
 
   files: (
     type: FileType,
@@ -85,9 +86,11 @@ export const sharedSchemas = {
     const { mimeInvalid, tooLarge, tooFew, tooMany } = messages.files;
     const { displayName, size, mimeTypes } = fileMeta[type];
 
-    const min = options?.min;
-    const max = options?.max;
-    const maxFileSize = options?.maxFileSize ?? size.bytes;
+    const min = options?.min ?? 0;
+    const max = options?.max ?? 0;
+
+    const mFS = options?.maxFileSize;
+    const maxFileSize = mFS && mFS > 0 ? mFS : size.bytes;
     const maxFileSizeInMB = toMegabytes(maxFileSize).toFixed(2);
 
     let schema = z
@@ -107,12 +110,12 @@ export const sharedSchemas = {
       })
       .array();
 
-    if (min) {
+    if (min > 0) {
       const message = tooFew(displayName, min);
       schema = schema.min(min, { error: message });
     }
 
-    if (max && max > 0) {
+    if (max > 0) {
       const message = tooMany(displayName, max);
       schema = schema.max(max, { error: message });
     }
