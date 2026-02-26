@@ -33,7 +33,7 @@ type UploadFilesData = {
   mimeType: string;
   fileSize: number;
   fileUrl?: string;
-}[];
+};
 
 const baseOptionSchema = z.object({
   fileType: z.enum(allFileTypes).default("file"),
@@ -51,9 +51,7 @@ const baseOptionSchema = z.object({
   withExtension: sharedSchemas.boolean().default(true),
 });
 
-type BaseUploadFilesOption = z.infer<typeof baseOptionSchema>;
-
-export type UploadFilesOptions = Partial<BaseUploadFilesOption> & {
+export type UploadFilesOptions = Partial<z.infer<typeof baseOptionSchema>> & {
   userId?: string;
 
   db?: Kysely<Database>;
@@ -74,7 +72,7 @@ export type RemoveFilesOptions = {
 export async function uploadFiles(
   req: Request,
   options?: UploadFilesOptions,
-): Promise<ActionResponse<UploadFilesData>> {
+): Promise<ActionResponse<UploadFilesData[]>> {
   if (!req.body || !req.files)
     return { success: false, message: `[req] ${messages.invalid("Request")}` };
 
@@ -99,114 +97,106 @@ export async function uploadFiles(
     .safeParse(options?.userId ?? req.session?.user.id);
   if (!parsedUserId.success) return formatZodError(parsedUserId.error);
 
-  const parsedFile = sharedSchemas
+  const parsedFiles = sharedSchemas
     .files(resolvedOptions.fileType, resolvedOptions)
     .safeParse(req.files);
-  if (!parsedFile.success)
-    return formatZodError(parsedFile.error, { part: "files", withPath: true });
+  if (!parsedFiles.success)
+    return formatZodError(parsedFiles.error, { part: "files", withPath: true });
 
   const userId = parsedUserId.data;
   const database = options?.db ?? db;
   const isEnabled = options?.enabled ?? true;
 
-  const data = await Promise.all(
-    parsedFile.data.map(async (file) => {
-      const {
-        fieldname,
-        originalname,
-        mimetype: mimeType,
-        size: fileSize,
-        buffer,
-      } = file;
+  const data: UploadFilesData[] = [];
 
-      const categoryParse = storageTableSchema
-        .pick({ category: true })
-        .safeParse({ category: resolvedOptions.category ?? fieldname });
+  for (const file of parsedFiles.data) {
+    const {
+      fieldname,
+      originalname,
+      mimetype: mimeType,
+      size: fileSize,
+      buffer,
+    } = file;
 
-      if (!categoryParse.success) {
-        const { displayName } = fileMeta[resolvedOptions.fileType];
-        const message = `Kategori ${displayName} tidak valid pada field '${fieldname}'.`;
-        throw new Error(message);
-      }
+    const categoryParse = storageTableSchema
+      .pick({ category: true })
+      .safeParse({ category: resolvedOptions.category ?? fieldname });
 
-      let id = crypto.randomUUID().toUpperCase();
-      const { fileName: originalFileName, extension } =
-        getFileParts(originalname);
+    if (!categoryParse.success) {
+      const { displayName } = fileMeta[resolvedOptions.fileType];
+      const message = `Kategori ${displayName} tidak valid pada field '${fieldname}'.`;
+      return { ...formatZodError(categoryParse.error), message };
+    }
 
-      const now = resolvedOptions.unique ? Date.now().toString() : "";
-      const prefix = resolvedOptions.prefix;
-      const suffix = resolvedOptions.suffix;
-      const fileName = resolvedOptions.fileName
-        ? `${prefix}${resolvedOptions.fileName}${now}${suffix}`
-        : `${prefix}${originalFileName}${now}${suffix}`;
+    let id = crypto.randomUUID().toUpperCase();
+    const { fileName: originalFileName, extension } =
+      getFileParts(originalname);
 
-      const directory = resolvedOptions.directory ?? defaultDirectory;
-      const category = categoryParse.data.category;
-      const filePath = `${directory}/${category}/${fileName}${resolvedOptions.withExtension ? `.${extension}` : ""}`;
+    const now = resolvedOptions.unique ? Date.now().toString() : "";
+    const prefix = resolvedOptions.prefix;
+    const suffix = resolvedOptions.suffix;
+    const fileName = resolvedOptions.fileName
+      ? `${prefix}${resolvedOptions.fileName}${now}${suffix}`
+      : `${prefix}${originalFileName}${now}${suffix}`;
 
-      if (isEnabled) {
-        const exists = await database
-          .selectFrom("storage")
-          .select("id")
-          .where("file_path", "=", filePath)
+    const directory = resolvedOptions.directory ?? defaultDirectory;
+    const category = categoryParse.data.category;
+    const filePath = `${directory}/${category}/${fileName}${resolvedOptions.withExtension ? `.${extension}` : ""}`;
+
+    if (isEnabled) {
+      const exists = await database
+        .selectFrom("storage")
+        .select("id")
+        .where("file_path", "=", filePath)
+        .executeTakeFirst();
+
+      if (exists) {
+        id = exists.id;
+        await database
+          .updateTable("storage")
+          .set("file_size", fileSize)
+          .set("deleted_by", null)
+          .set("deleted_at", null)
+          .set("updated_by", userId)
+          .set("updated_at", new Date())
+          .where("id", "=", id)
           .executeTakeFirst();
-
-        if (exists) {
-          id = exists.id;
-          await database
-            .updateTable("storage")
-            .set("file_size", fileSize)
-            .set("deleted_by", null)
-            .set("deleted_at", null)
-            .set("updated_by", userId)
-            .set("updated_at", new Date())
-            .where("id", "=", id)
-            .executeTakeFirst();
-        } else {
-          await database
-            .insertInto("storage")
-            .values({
-              id,
-              file_name: fileName,
-              category: category,
-              file_path: filePath,
-              mime_type: mimeType,
-              file_size: fileSize,
-              created_by: userId,
-            })
-            .executeTakeFirst();
-        }
-
-        await s3.putObject(bucket, filePath, buffer, fileSize, {
-          "Content-Type": mimeType,
-        });
+      } else {
+        await database
+          .insertInto("storage")
+          .values({
+            id,
+            file_name: fileName,
+            category: category,
+            file_path: filePath,
+            mime_type: mimeType,
+            file_size: fileSize,
+            created_by: userId,
+          })
+          .executeTakeFirst();
       }
 
-      const fileUrl = resolvedOptions.url
-        ? await getPresignedUrl(filePath, { fileName })
-        : undefined;
+      await s3.putObject(bucket, filePath, buffer, fileSize, {
+        "Content-Type": mimeType,
+      });
+    }
 
-      return {
-        id,
-        fileName,
-        category,
-        filePath,
-        mimeType,
-        fileSize,
-        ...(fileUrl ? { fileUrl } : {}),
-      };
-    }),
-  );
+    const fileUrl = resolvedOptions.url
+      ? await getPresignedUrl(filePath, { fileName })
+      : undefined;
 
-  try {
-    return { success: true, count: { total: data.length }, data };
-  } catch (e) {
-    const message =
-      e instanceof Error
-        ? e.message
-        : "Terjadi kesalahan saat mengunggah file.";
-    return { success: false, message, error: e };
+    data.push({
+      id,
+      fileName,
+      category,
+      filePath,
+      mimeType,
+      fileSize,
+      ...(fileUrl ? { fileUrl } : {}),
+    });
   }
+
+  return { success: true, count: { total: data.length }, data };
 }
 
 export async function getPresignedUrl(
