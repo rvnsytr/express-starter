@@ -5,7 +5,6 @@ import z from "zod";
 import { appMeta } from "./constants/app";
 import { messages } from "./constants/messages";
 import { createDialect, db } from "./db";
-import { novu } from "./novu";
 import { ac, roles } from "./permission";
 import { getPresignedUrl, removeFiles } from "./storage";
 
@@ -44,14 +43,14 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
-    sendResetPassword: async ({ user, token }) => {
-      const { name, email } = user;
-      const url = `${appMeta.cors.origin}/reset-password?token=${token}`;
-      void novu.trigger("purnaku-reset-password", {
-        to: { subscriberId: email, email },
-        payload: { name, url },
-      });
-    },
+    // sendResetPassword: async ({ user, token }) => {
+    //   const { name, email } = user;
+    //   const url = `${appMeta.cors.origin}/reset-password?token=${token}`;
+    //   void novu.trigger("purnaku-reset-password", {
+    //     to: { subscriberId: email, email },
+    //     payload: { name, url },
+    //   });
+    // },
     onPasswordReset: async ({ user }) => {
       await db
         .insertInto("event_log")
@@ -62,14 +61,14 @@ export const auth = betterAuth({
 
   emailVerification: {
     sendOnSignUp: true,
-    sendVerificationEmail: async ({ user, token }) => {
-      const { name, email } = user;
-      const url = `${appMeta.cors.origin}/verify-user?token=${token}`;
-      void novu.trigger("purnaku-verification", {
-        to: { subscriberId: email, email },
-        payload: { name, url },
-      });
-    },
+    // sendVerificationEmail: async ({ user, token }) => {
+    //   const { name, email } = user;
+    //   const url = `${appMeta.cors.origin}/verify-user?token=${token}`;
+    //   void novu.trigger("purnaku-verification", {
+    //     to: { subscriberId: email, email },
+    //     payload: { name, url },
+    //   });
+    // },
     afterEmailVerification: async (user) => {
       await db
         .insertInto("event_log")

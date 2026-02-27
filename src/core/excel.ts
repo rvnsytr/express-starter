@@ -53,7 +53,7 @@ export async function readExcelSheet<S extends ZodType>(
   await promises.mkdir(tmpDir, { recursive: true });
 
   const data: z.infer<S>[] = [];
-  let errorMessage: string | null = null;
+  let error: Extract<ActionResponse, { success: false }> | null = null;
 
   for (const file of files) {
     const inputPath = path.join(tmpDir, `${Date.now()}-${file.originalname}`);
@@ -73,7 +73,7 @@ export async function readExcelSheet<S extends ZodType>(
         mode === "include"
           ? !rows.includes(rowNumber)
           : rows.includes(rowNumber);
-      if (!Array.isArray(row.values) || isRowSkip || !!errorMessage) return;
+      if (!Array.isArray(row.values) || isRowSkip || !!error) return;
 
       const parsedRow = config.schema.safeParse(
         Object.fromEntries(
@@ -87,15 +87,17 @@ export async function readExcelSheet<S extends ZodType>(
         ),
       );
 
-      if (!parsedRow.success)
-        return (errorMessage = `Baris ke ${rowNumber}: ${formatZodError(parsedRow.error)}`);
+      if (!parsedRow.success) {
+        const { message, ...restError } = formatZodError(parsedRow.error);
+        const errorMessage = `Baris ke ${rowNumber}: ${message}`;
+        return (error = { message: errorMessage, ...restError });
+      }
 
       data.push(parsedRow.data);
     });
 
     promises.unlink(inputPath);
-
-    if (errorMessage) return { success: false, message: errorMessage };
+    if (error) return error;
   }
 
   return { success: true, data };

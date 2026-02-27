@@ -249,7 +249,9 @@ export const sharedSchemas = {
     .regex(/[0-9]/, { error: messages.password.number })
     .regex(/[^A-Za-z0-9]/, { error: messages.password.character }),
 
-  gender: z.enum(allGenders),
+  gender: z.enum(allGenders, {
+    error: `${messages.invalid("Jenis kelamin")} Diharapkan salah satu dari ${allGenders.map((v) => `'${v}'`).join("/")}`,
+  }),
 };
 
 export function withSchemaPrefix<P extends string, S extends z.ZodRawShape>(
