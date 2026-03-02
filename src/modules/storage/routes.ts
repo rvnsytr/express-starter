@@ -70,7 +70,7 @@ router.post(
   async (req, res) => {
     const upload = await uploadFiles(req, {
       allowBodyOverride: true,
-      enabled: false,
+      // enabled: false,
     });
     if (!upload.success) return res.api({ code: 400, ...upload });
 

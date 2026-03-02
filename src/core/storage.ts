@@ -68,7 +68,6 @@ export type RemoveFilesOptions = {
   disabled?: boolean;
 };
 
-// TODO : Validate Request
 export async function uploadFiles(
   req: Request,
   options?: UploadFilesOptions,
@@ -205,7 +204,7 @@ export async function getPresignedUrl(
   options?: { fileName?: string; duration?: number },
 ) {
   const fileName = options?.fileName;
-  const duration = options?.duration ? 1000 * 60 * options.duration : 5;
+  const duration = 1000 * 60 * (options?.duration ?? 5);
   const reqParams = fileName
     ? { "response-content-disposition": `attachment; filename="${fileName}"` }
     : undefined;
