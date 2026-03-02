@@ -1,6 +1,7 @@
 import { userSchema } from "@/modules/auth/schema";
 import { APIError, betterAuth } from "better-auth";
-import { admin, createAuthMiddleware, openAPI } from "better-auth/plugins";
+import { createAuthMiddleware } from "better-auth/api";
+import { admin, openAPI } from "better-auth/plugins";
 import z from "zod";
 import { appMeta } from "./constants/app";
 import { messages } from "./constants/messages";
