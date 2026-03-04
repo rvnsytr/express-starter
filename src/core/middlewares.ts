@@ -17,10 +17,12 @@ export const init: RequestHandler = (_req, res, next) => {
     const code = payload?.code ?? 200;
     const success = code >= 200 && code < 300;
     const count = payload?.count;
-    const message = payload?.message ?? (success ? "Sukses" : messages.error);
+    const message = payload?.message ?? (success ? "Success" : messages.error);
     const data = payload?.data ?? null;
     const error = isShowError ? payload?.error : undefined;
-    return res.status(code).json({ success, message, count, data, error });
+    return res
+      .status(code)
+      .json({ code, success, message, count, data, error });
   };
 
   next();
@@ -63,23 +65,29 @@ export function authorize(permissions?: Permissions): RequestHandler {
   };
 }
 
-// TODO: Files validation
 export function validateRequest<
   TParams = unknown,
   TQuery = unknown,
   TBody = unknown,
->(schema: {
-  params?: z.ZodType<TParams>;
-  query?: z.ZodType<TQuery>;
-  body?: z.ZodType<TBody>;
-}): RequestHandler<TParams, unknown, TBody, TQuery> {
+>(
+  schema: {
+    params?: z.ZodType<TParams>;
+    query?: z.ZodType<TQuery>;
+    body?: z.ZodType<TBody>;
+  },
+  options?: { withPath?: boolean },
+): RequestHandler<TParams, unknown, TBody, TQuery> {
   const jsonParser = json();
+  const withPath = options?.withPath ?? true;
+
   return (req, res, next) =>
     jsonParser(req, res, (err) => {
       if (err) return next(err);
 
-      const sendError = (zodError: z.ZodError, part: RequestPart) =>
-        res.api(formatZodError(zodError, { part, withPath: true }));
+      const sendError = (zodError: z.ZodError, part: RequestPart) => {
+        const error = formatZodError(zodError, { part, withPath });
+        return res.api({ code: 400, ...error });
+      };
 
       if (schema.params) {
         const parsed = schema.params.safeParse(req.params);

@@ -54,51 +54,64 @@ export async function readExcelSheet<S extends ZodType>(
 
   const data: z.infer<S>[] = [];
   let error: Extract<ActionResponse, { success: false }> | null = null;
+  const excelTmpDir: string[] = [];
 
-  for (const file of files) {
-    const inputPath = path.join(tmpDir, `${Date.now()}-${file.originalname}`);
-    await promises.writeFile(inputPath, file.buffer);
+  try {
+    for (const file of files) {
+      const inputPath = path.join(tmpDir, `${Date.now()}-${file.originalname}`);
+      excelTmpDir.push(inputPath);
+      await promises.writeFile(inputPath, file.buffer);
 
-    const workbook = new Excel.Workbook();
-    await workbook.xlsx.readFile(inputPath);
-    const worksheet = workbook.getWorksheet(sheet);
+      const workbook = new Excel.Workbook();
+      await workbook.xlsx.readFile(inputPath);
+      const worksheet = workbook.getWorksheet(sheet);
 
-    if (!worksheet) {
-      const message = `Worksheet '${sheet}' tidak ditemukan.`;
-      return { success: false, message };
-    }
-
-    worksheet.eachRow((row, rowNumber) => {
-      const isRowSkip =
-        mode === "include"
-          ? !rows.includes(rowNumber)
-          : rows.includes(rowNumber);
-      if (!Array.isArray(row.values) || isRowSkip || !!error) return;
-
-      const parsedRow = config.schema.safeParse(
-        Object.fromEntries(
-          Object.entries(source)
-            .map(([k, i]) => {
-              if (!Array.isArray(row.values) || typeof i !== "number")
-                return null;
-              return [k, row.values[i] ?? null];
-            })
-            .filter((v) => !!v),
-        ),
-      );
-
-      if (!parsedRow.success) {
-        const { message, ...restError } = formatZodError(parsedRow.error);
-        const errorMessage = `Baris ke ${rowNumber}: ${message}`;
-        return (error = { message: errorMessage, ...restError });
+      if (!worksheet) {
+        const message = `Worksheet '${sheet}' tidak ditemukan.`;
+        return { success: false, message };
       }
 
-      data.push(parsedRow.data);
-    });
+      worksheet.eachRow((row, rowNumber) => {
+        const isRowSkip =
+          mode === "include"
+            ? !rows.includes(rowNumber)
+            : rows.includes(rowNumber);
+        if (!Array.isArray(row.values) || isRowSkip || !!error) return;
 
-    promises.unlink(inputPath);
-    if (error) return error;
+        const parsedRow = config.schema.safeParse(
+          Object.fromEntries(
+            Object.entries(source)
+              .map(([k, i]) => {
+                if (!Array.isArray(row.values) || typeof i !== "number")
+                  return null;
+                return [k, row.values[i] ?? null];
+              })
+              .filter((v) => !!v),
+          ),
+        );
+
+        if (!parsedRow.success) {
+          const { message, ...restError } = formatZodError(parsedRow.error);
+          const errorMessage = `Baris ke ${rowNumber}: ${message}`;
+          return (error = { message: errorMessage, ...restError });
+        }
+
+        data.push(parsedRow.data);
+      });
+
+      promises.unlink(inputPath);
+      if (error) return error;
+    }
+
+    return { success: true, data };
+  } catch (e) {
+    excelTmpDir.forEach((p) => promises.unlink(p));
+    return {
+      success: false,
+      message:
+        e instanceof Error
+          ? e.message
+          : "Terjadi kesalahan saat memproses file.",
+    };
   }
-
-  return { success: true, data };
 }
