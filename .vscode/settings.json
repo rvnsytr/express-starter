@@ -9,6 +9,5 @@
   "files.watcherExclude": { "**/bruno/**": true },
   "search.exclude": { "**/bruno/**": true },
 
-  "typescript.preferences.importModuleSpecifier": "shortest",
-  "javascript.preferences.importModuleSpecifier": "shortest"
+  "js/ts.preferences.importModuleSpecifier": "shortest"
 }

@@ -17,6 +17,14 @@ export function sanitizeDate(str: string) {
   return digits.slice(0, 7) + digits[digits.length - 1];
 }
 
+export function getTimeOfDay(date = new Date()) {
+  const hour = date.getHours();
+  if (hour >= 4 && hour < 11) return "pagi";
+  if (hour < 15) return "siang";
+  if (hour < 18) return "sore";
+  return "malam";
+}
+
 export function formatDDMMYY(str: string) {
   const digits = str.replace(/\D/g, "");
   if (digits.length <= 2) return digits;
