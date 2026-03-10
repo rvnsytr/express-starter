@@ -12,11 +12,11 @@ import z from "zod";
 export const userSchema = betterAuthUserSchema.extend({
   email: sharedSchemas.email,
   name: sharedSchemas.string({ min: 1 }),
-  image: z.string().optional().nullable(),
+  image: z.string().nullish(),
   role: z.lazy(() => z.enum(allRoles)),
   banned: z.boolean().default(false),
-  banReason: z.string().optional().nullable(),
-  banExpires: z.date().optional().nullable(),
+  banReason: z.string().nullish(),
+  banExpires: z.date().nullish(),
 });
 
 export const userTableSchema = userSchema.transform((v) =>
@@ -28,7 +28,7 @@ export const accountTableSchema = betterAuthAccountSchema.transform((v) =>
 );
 
 export const sessionSchema = betterAuthSessionSchema.extend({
-  impersonatedBy: z.string().nullable().optional(),
+  impersonatedBy: z.string().nullish(),
 });
 
 export const sessionTableSchema = sessionSchema.transform((v) =>
