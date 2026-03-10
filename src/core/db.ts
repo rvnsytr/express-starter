@@ -1,4 +1,4 @@
-import { Kysely, MssqlDialect, sql } from "kysely";
+import { Kysely, MssqlDialect, ParseJSONResultsPlugin, sql } from "kysely";
 import * as tarn from "tarn";
 import * as tedious from "tedious";
 import { Database } from "./schema.db";
@@ -32,7 +32,10 @@ export function createDialect(config?: DBConfig) {
   });
 }
 
-export const db = new Kysely<Database>({ dialect: createDialect() });
+export const db = new Kysely<Database>({
+  dialect: createDialect(),
+  plugins: [new ParseJSONResultsPlugin()],
+});
 
 export const countWhere = (rawCondition: string) =>
   sql<number>`COALESCE(SUM(CASE WHEN ${sql.raw(rawCondition)} THEN 1 ELSE 0 END), 0)`;

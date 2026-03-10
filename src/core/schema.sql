@@ -13,6 +13,7 @@ CREATE TABLE [user] (
     ban_expires DATETIMEOFFSET
 );
 
+CREATE UNIQUE INDEX IDX_user_email ON [user](email);
 CREATE INDEX IDX_user_role ON [user](role);
 CREATE INDEX IDX_user_banned ON [user](banned);
 
@@ -87,6 +88,7 @@ CREATE TABLE [storage] (
     CONSTRAINT FK_files_created_by FOREIGN KEY (created_by) REFERENCES [user](id)
 );
 
+CREATE INDEX IDX_storage_category ON [storage](category);
 CREATE INDEX IDX_storage_created_by ON [storage](created_by);
 CREATE INDEX IDX_storage_updated_by ON [storage](updated_by);
 CREATE INDEX IDX_storage_deleted_by ON [storage](deleted_by);
