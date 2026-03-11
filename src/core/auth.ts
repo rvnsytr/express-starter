@@ -146,11 +146,21 @@ export const auth = betterAuth({
   },
 
   hooks: {
-    // before: createAuthMiddleware(async (ctx) => {
-    //   if (ctx.path === "/sign-up/email")
-    //     throw new APIError("BAD_REQUEST", { message: "BAD" });
-    // }),
-
+    before: createAuthMiddleware(async (ctx) => {
+      if (ctx.path === "/update-user" && ctx.body.image) {
+        const res = await db
+          .selectFrom("storage")
+          .select(["updated_at"])
+          .where("id", "=", ctx.body.image)
+          .executeTakeFirst();
+        const lastImageUpdatedAt = res?.updated_at.getTime();
+        if (lastImageUpdatedAt)
+          return {
+            context: { ...ctx, body: { ...ctx.body, lastImageUpdatedAt } },
+          };
+      }
+      return ctx;
+    }),
     after: createAuthMiddleware(async (ctx) => {
       const { session, newSession } = ctx.context;
 
@@ -183,21 +193,33 @@ export const auth = betterAuth({
       if (ctx.path === "/update-user") {
         const user = getUser();
 
-        const oldImgId = user.image;
-        const newImgId = newSession?.user.image;
-        const isImgChange = oldImgId !== newImgId;
+        const oldImageId = user.image;
+        const newImageId = newSession?.user.image;
+        const imageId = newImageId ?? oldImageId;
+        let isImageSame = oldImageId === newImageId;
+
+        if (imageId && isImageSame && ctx.body.lastImageUpdatedAt) {
+          const res = await db
+            .selectFrom("storage")
+            .select(["updated_at"])
+            .where("id", "=", imageId)
+            .executeTakeFirst();
+          if (res?.updated_at)
+            isImageSame =
+              res.updated_at.getTime() !== ctx.body.lastImageUpdatedAt;
+        }
 
         const res = await db.transaction().execute(async (trx) => {
           await trx
             .insertInto("event_log")
             .values({
-              type: isImgChange ? "profile-image-updated" : "profile-updated",
+              type: isImageSame ? "profile-updated" : "profile-image-updated",
               user_id: user.id,
             })
             .execute();
 
-          if (oldImgId && isImgChange)
-            return await removeFiles([oldImgId], user.id, { db: trx });
+          if (oldImageId && !newImageId)
+            return await removeFiles([oldImageId], user.id, { db: trx });
         });
 
         if (res && !res.success)
