@@ -37,7 +37,7 @@ router.get(
       );
     }
 
-    return res.api({ data: transformKeys(result, "camel") });
+    return res.success({ data: transformKeys(result, "camel") });
   },
 );
 
@@ -59,7 +59,7 @@ router.post(
       }),
     );
 
-    return res.api({ data });
+    return res.success({ data });
   },
 );
 
@@ -72,10 +72,10 @@ router.post(
       allowBodyOverride: true,
       // enabled: false,
     });
-    if (!upload.success) return res.api({ code: 400, ...upload });
+    if (!upload.success) return res.success({ code: 400, ...upload });
 
     const code = upload.success ? 200 : 400;
-    return res.api({ code, ...upload });
+    return res.success({ code, ...upload });
   },
 );
 
@@ -89,8 +89,8 @@ router.delete(
   async (req, res) => {
     const { ids, userId } = req.body;
     const remove = await removeFiles(ids, userId, { by: req.query.by });
-    if (!remove.success) return res.api({ code: 400, ...remove });
-    return res.api(remove);
+    if (!remove.success) return res.error({ code: 400, ...remove });
+    return res.success(remove);
   },
 );
 

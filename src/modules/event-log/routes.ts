@@ -28,7 +28,7 @@ router.post(
 
     const data = await withDataController(req.body, dataDef).execute();
 
-    return res.api({ count, data: transformKeys(data, "camel") });
+    return res.success({ count, data: transformKeys(data, "camel") });
   },
 );
 
@@ -37,7 +37,7 @@ router.post(
   authorize({ event_log: ["list:own"] }),
   validateRequest({ body: dataControllerSchema }),
   async (req, res) =>
-    res.api(await getEventLogById(req.body, req.session!.user.id)),
+    res.success(await getEventLogById(req.body, req.session!.user.id)),
 );
 
 router.post(
@@ -47,7 +47,8 @@ router.post(
     params: z.object({ id: z.string() }),
     body: dataControllerSchema,
   }),
-  async (req, res) => res.api(await getEventLogById(req.body, req.params.id)),
+  async (req, res) =>
+    res.success(await getEventLogById(req.body, req.params.id)),
 );
 
 export { router };

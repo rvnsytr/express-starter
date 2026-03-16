@@ -4,7 +4,11 @@ import { ErrorRequestHandler, json, RequestHandler } from "express";
 import z from "zod";
 import { auth } from "./auth";
 import { messages } from "./constants/messages";
-import { ApiPayload, RequestPart } from "./constants/types";
+import {
+  ApiErrorPayload,
+  ApiSuccessPayload,
+  RequestPart,
+} from "./constants/types";
 import { Permissions } from "./permission";
 import { formatZodError } from "./utils/formaters";
 import { delay } from "./utils/helpers";
@@ -13,16 +17,33 @@ export const init: RequestHandler = (_req, res, next) => {
   const nodeEnv = process.env.NODE_ENV ?? "local";
   const isShowError = nodeEnv === "local" || nodeEnv === "development";
 
-  res.api = <T>(payload?: ApiPayload<T>) => {
-    const code = payload?.code ?? 200;
-    const success = code >= 200 && code < 300;
-    const count = payload?.count;
-    const message = payload?.message ?? (success ? "Success" : messages.error);
-    const data = payload?.data ?? null;
-    const error = isShowError ? payload?.error : undefined;
-    return res
-      .status(code)
-      .json({ code, success, message, count, data, error });
+  res.success = <T>(payload?: ApiSuccessPayload<T>) => {
+    const code =
+      payload?.code && payload.code >= 200 && payload.code < 300
+        ? payload.code
+        : 200;
+
+    return res.status(code).json({
+      code,
+      success: true,
+      message: payload?.message ?? "Success",
+      count: payload?.count,
+      data: payload?.data ?? null,
+    });
+  };
+
+  res.error = (payload?: ApiErrorPayload) => {
+    const code =
+      payload?.code && payload.code >= 400 && payload.code < 600
+        ? payload.code
+        : 500;
+
+    return res.status(code).json({
+      code,
+      success: false,
+      message: payload?.message ?? messages.error,
+      error: isShowError ? payload?.error : undefined,
+    });
   };
 
   next();
@@ -34,15 +55,15 @@ export const delayHandler: RequestHandler = async (_req, _res, next) => {
 };
 
 export const notFoundHandler: RequestHandler = (_req, res) => {
-  return res.api({ code: 404, message: messages.notFound });
+  return res.error({ code: 404, message: messages.notFound });
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
   console.error(err);
   if (err instanceof APIError)
-    return res.api({ code: err.statusCode, error: err.body ?? undefined });
-  return res.api({ code: 500, error: err?.message });
+    return res.error({ code: err.statusCode, error: err.body });
+  return res.error({ error: err?.message });
 };
 
 export function authorize(permissions?: Permissions): RequestHandler {
@@ -50,7 +71,8 @@ export function authorize(permissions?: Permissions): RequestHandler {
     const headers = fromNodeHeaders(req.headers);
     const session = await auth.api.getSession({ headers });
 
-    if (!session) return res.api({ code: 401, message: messages.unauthorized });
+    if (!session)
+      return res.error({ code: 401, message: messages.unauthorized });
 
     req.session = session;
     if (!permissions) return next();
@@ -61,7 +83,7 @@ export function authorize(permissions?: Permissions): RequestHandler {
 
     return isAuthorized.success
       ? next()
-      : res.api({ code: 403, message: messages.forbidden });
+      : res.error({ code: 403, message: messages.forbidden });
   };
 }
 
@@ -86,7 +108,7 @@ export function validateRequest<
 
       const sendError = (zodError: z.ZodError, part: RequestPart) => {
         const error = formatZodError(zodError, { part, withPath });
-        return res.api({ code: 400, ...error });
+        return res.error({ code: 400, ...error });
       };
 
       if (schema.params) {

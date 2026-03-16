@@ -4,18 +4,23 @@ export type OmitByType<T, V> = {
   [K in keyof T as T[K] extends V ? never : K]: T[K];
 };
 
-export type ActionResponse<T = null> = {
-  count?: ({ total: number } & Record<string, number>) | undefined;
-} & (
+type Count = ({ total: number } & Record<string, number>) | undefined;
+
+export type ActionResponse<T = null> = { count?: Count } & (
   | { success: true; data: T }
   | { success: false; message: string; error?: unknown }
 );
 
-export type ApiPayload<T = null> = Pick<ActionResponse, "count"> & {
+export type ApiSuccessPayload<T = null> = {
   code?: number;
-  success?: boolean;
   message?: string;
+  count?: Count;
   data?: T;
+};
+
+export type ApiErrorPayload = {
+  code?: number;
+  message?: string;
   error?: unknown;
 };
 

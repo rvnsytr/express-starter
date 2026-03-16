@@ -21,7 +21,9 @@ app.use(init);
 
 app.use("/api/auth", authRoutes);
 
-app.get("/api", (_, res) => res.api({ message: `Hello, ${appMeta.name}` }));
+app.get("/api", (_, res) =>
+  res.success({ code: 301, message: `Hello, ${appMeta.name}` }),
+);
 app.use("/api/storage", storageRoutes);
 app.use("/api/event-log", eventLogRoutes);
 

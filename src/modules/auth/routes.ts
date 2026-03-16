@@ -67,7 +67,7 @@ router.post(
       })),
     );
 
-    return res.api({ count, data: transformKeys(data, "camel") });
+    return res.success({ count, data: transformKeys(data, "camel") });
   },
 );
 

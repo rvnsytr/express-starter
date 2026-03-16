@@ -153,11 +153,9 @@ export const auth = betterAuth({
           .select(["updated_at"])
           .where("id", "=", ctx.body.image)
           .executeTakeFirst();
-        const lastImageUpdatedAt = res?.updated_at.getTime();
-        if (lastImageUpdatedAt)
-          return {
-            context: { ...ctx, body: { ...ctx.body, lastImageUpdatedAt } },
-          };
+        const updatedAt = res?.updated_at ? res.updated_at.getTime() : null;
+        if (updatedAt)
+          return { context: { ...ctx, body: { ...ctx.body, updatedAt } } };
       }
       return ctx;
     }),
@@ -193,20 +191,19 @@ export const auth = betterAuth({
       if (ctx.path === "/update-user") {
         const user = getUser();
 
-        const oldImageId = user.image;
+        const currentImageId = user.image;
         const newImageId = newSession?.user.image;
-        const imageId = newImageId ?? oldImageId;
-        let isImageSame = oldImageId === newImageId;
+        const imageId = newImageId ?? currentImageId;
+        let isImageSame = currentImageId === newImageId;
 
-        if (imageId && isImageSame && ctx.body.lastImageUpdatedAt) {
+        if (imageId && isImageSame && ctx.body.updatedAt) {
           const res = await db
             .selectFrom("storage")
             .select(["updated_at"])
             .where("id", "=", imageId)
             .executeTakeFirst();
           if (res?.updated_at)
-            isImageSame =
-              res.updated_at.getTime() !== ctx.body.lastImageUpdatedAt;
+            isImageSame = res.updated_at.getTime() !== ctx.body.updatedAt;
         }
 
         const res = await db.transaction().execute(async (trx) => {
@@ -218,8 +215,8 @@ export const auth = betterAuth({
             })
             .execute();
 
-          if (oldImageId && !newImageId)
-            return await removeFiles([oldImageId], user.id, { db: trx });
+          if (currentImageId && !newImageId)
+            return await removeFiles([currentImageId], user.id, { db: trx });
         });
 
         if (res && !res.success)
