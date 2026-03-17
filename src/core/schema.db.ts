@@ -1,8 +1,8 @@
 // Docs: https://www.kysely.dev/docs/getting-started
 
-import { ColumnType, Generated, Selectable } from "kysely";
+import { Override } from "@/core/constants/types";
+import { ColumnType, Generated } from "kysely";
 import z from "zod";
-import { Override } from "./constants/types";
 
 import {
   accountTableSchema,
@@ -63,6 +63,3 @@ export type Database = {
     }
   >;
 };
-
-export type StorageTable = Selectable<Database["storage"]>;
-export type EventLogTable = Selectable<Database["event_log"]>;

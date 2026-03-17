@@ -2,16 +2,17 @@ import { appMeta } from "@/core/constants/app";
 import { allFileTypes, fileMeta } from "@/core/constants/file";
 import { ActionResponse } from "@/core/constants/types";
 import { db } from "@/core/db";
-import { Database, StorageTable } from "@/core/schema.db";
 import { sharedSchemas } from "@/core/schema.zod";
 import { formatZodError } from "@/core/utils/formaters";
 import { getFileParts } from "@/core/utils/helpers";
+import { StorageCategory } from "@/modules/storage/constants";
 import { storageTableSchema } from "@/modules/storage/schema";
 import { Request } from "express";
 import { Kysely } from "kysely";
 import { Client } from "minio";
 import z from "zod";
 import { messages } from "./constants/messages";
+import { Database } from "./schema.db";
 
 const bucket = process.env.AWS_BUCKET!;
 const defaultDirectory =
@@ -28,7 +29,7 @@ const s3 = new Client({
 type UploadFilesData = {
   id: string;
   fileName: string;
-  category: StorageTable["category"];
+  category: StorageCategory;
   filePath: string;
   mimeType: string;
   fileSize: number;
@@ -55,7 +56,7 @@ export type UploadFilesOptions = Partial<z.infer<typeof baseOptionSchema>> & {
   userId?: string;
 
   db?: Kysely<Database>;
-  category?: StorageTable["category"];
+  category?: StorageCategory;
   directory?: string;
 
   allowBodyOverride?: boolean;

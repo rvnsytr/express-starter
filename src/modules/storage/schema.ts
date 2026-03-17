@@ -1,13 +1,13 @@
-import { sharedSchemas } from "@/core/schema.zod";
 import z from "zod";
+import { allStorageCategories } from "./constants";
 
 export const storageTableSchema = z.object({
   id: z.uuidv4(),
 
-  file_name: sharedSchemas.string({ min: 1, max: 255 }),
-  category: z.enum(["image"]),
-  file_path: sharedSchemas.string({ min: 1, max: 500 }),
-  mime_type: sharedSchemas.string({ max: 100 }),
+  file_name: z.string(),
+  category: z.enum(allStorageCategories),
+  file_path: z.string(),
+  mime_type: z.string(),
   file_size: z.number(),
 
   deleted_at: z.date().nullable().default(null),
