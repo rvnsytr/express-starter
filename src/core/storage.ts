@@ -5,7 +5,10 @@ import { db } from "@/core/db";
 import { sharedSchemas } from "@/core/schema.zod";
 import { formatZodError } from "@/core/utils/formaters";
 import { getFileParts } from "@/core/utils/helpers";
-import { StorageCategory } from "@/modules/storage/constants";
+import {
+  allStorageCategories,
+  StorageCategory,
+} from "@/modules/storage/constants";
 import { storageTableSchema } from "@/modules/storage/schema";
 import { Request } from "express";
 import { Kysely } from "kysely";
@@ -57,6 +60,7 @@ export type UploadFilesOptions = Partial<z.infer<typeof baseOptionSchema>> & {
 
   db?: Kysely<Database>;
   category?: StorageCategory;
+  allowedCategories?: StorageCategory[];
   directory?: string;
 
   allowBodyOverride?: boolean;
@@ -107,6 +111,7 @@ export async function uploadFiles(
   const userId = parsedUserId.data;
   const database = options?.db ?? db;
   const isEnabled = options?.enabled ?? true;
+  const allowedCategories = options?.allowedCategories ?? allStorageCategories;
 
   const data: UploadFilesData[] = [];
 
@@ -121,6 +126,7 @@ export async function uploadFiles(
 
     const categoryParse = storageTableSchema
       .pick({ category: true })
+      .refine((v) => allowedCategories.includes(v.category))
       .safeParse({ category: resolvedOptions.category ?? fieldname });
 
     if (!categoryParse.success) {

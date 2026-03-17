@@ -13,7 +13,6 @@ export type AuthSession = typeof auth.$Infer.Session;
 
 export type Role = (typeof allRoles)[number];
 export const allRoles = ["user", "admin"] as const;
-
 export const defaultRole: Role = "user";
 
 export const auth = betterAuth({

@@ -69,9 +69,11 @@ router.post(
   multer().any(),
   async (req, res) => {
     const upload = await uploadFiles(req, {
+      allowedCategories: ["image"],
       allowBodyOverride: true,
-      // enabled: false,
+      enabled: false,
     });
+
     if (!upload.success) return res.success({ code: 400, ...upload });
 
     const code = upload.success ? 200 : 400;
