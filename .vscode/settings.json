@@ -1,10 +1,5 @@
 {
-  "files.readonlyInclude": { "**/core/**": true },
-
-  "files.readonlyExclude": {
-    "**/core/schema.sql": true,
-    "**/core/schema.db.ts": true
-  },
+  // "files.readonlyInclude": { "**/core/**": true },
 
   "files.watcherExclude": { "**/bruno/**": true },
   "search.exclude": { "**/bruno/**": true, "**/dist/**": true },
