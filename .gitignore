@@ -12,10 +12,11 @@
 
 # local
 /test
-/out
 
 # production
 /build
+/dist
+/out
 
 # misc
 .DS_Store
@@ -33,6 +34,3 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
-
-# drizzle
-/drizzle

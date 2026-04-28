@@ -20,9 +20,12 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+
     rules: {
-      "@typescript-eslint/consistent-type-definitions": "off",
       "no-extra-boolean-cast": "off",
+      "@typescript-eslint/no-empty-function": "off",
+      "@typescript-eslint/consistent-type-definitions": "off",
+      "@typescript-eslint/non-nullable-type-assertion-style": "off",
     },
   },
 ]);

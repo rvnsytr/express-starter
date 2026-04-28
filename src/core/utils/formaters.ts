@@ -1,13 +1,12 @@
+import { appConfig, Language, languageConfig } from "@/shared/config";
 import z from "zod";
-import { appMeta } from "../constants/app";
-import { Language, languageMeta } from "../constants/metadata";
 import {
   ActionResponse,
   RequestPart,
   StringCase,
   TransformableStringCase,
   TransformKeys,
-} from "../constants/types";
+} from "../types";
 
 export function capitalize(string: string, mode: "all" | "first" = "all") {
   const handler = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -19,9 +18,17 @@ export function toBytes(mb: number) {
   return mb * 1024 * 1024;
 }
 
-export function toMegabytes(bytes: number) {
-  return bytes / 1024 / 1024;
-}
+export const formatBytes = (bytes: number, decimals = 2): string => {
+  if (bytes === 0) return "0 Bytes";
+
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
+
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+  return `${Number.parseFloat((bytes / k ** i).toFixed(dm))} ${sizes[i]}`;
+};
 
 export function sanitizeNumber(str: string): number {
   const normalized = str
@@ -48,6 +55,13 @@ export function normalizeString(str: string) {
     .replace(/\s+/g, " ");
 }
 
+export function fromCase(str: string) {
+  return str
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/[-_]/g, " ")
+    .trim();
+}
+
 export function toCase(str: string, mode: StringCase) {
   const base = normalizeString(str);
 
@@ -69,13 +83,6 @@ export function toCase(str: string, mode: StringCase) {
     default:
       return base;
   }
-}
-
-export function fromCase(str: string) {
-  return str
-    .replace(/([a-z])([A-Z])/g, "$1 $2")
-    .replace(/[-_]/g, " ")
-    .trim();
 }
 
 export function transformKeys<T, C extends TransformableStringCase>(
@@ -105,7 +112,9 @@ export function formatNumber(
   number: number,
   props?: { lang?: Language; options?: Intl.NumberFormatOptions },
 ) {
-  const locale = languageMeta[props?.lang ?? (appMeta.lang as Language)].locale;
+  const locale =
+    languageConfig[props?.lang ?? (appConfig.defaultLanguage as Language)]
+      .locale;
   const value = new Intl.NumberFormat(locale, props?.options).format(number);
   return value === "0" ? "0" : value;
 }

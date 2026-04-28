@@ -2,16 +2,10 @@ import { APIError } from "better-auth";
 import { fromNodeHeaders } from "better-auth/node";
 import { ErrorRequestHandler, json, RequestHandler } from "express";
 import z from "zod";
-import { auth } from "./auth";
-import { messages } from "./constants/messages";
-import {
-  ApiErrorPayload,
-  ApiSuccessPayload,
-  RequestPart,
-} from "./constants/types";
-import { Permissions } from "./permission";
-import { formatZodError } from "./utils/formaters";
-import { delay } from "./utils/helpers";
+import { auth, Permissions } from "./auth";
+import { messages } from "./messages";
+import { ApiErrorPayload, ApiSuccessPayload, RequestPart } from "./types";
+import { delay, formatZodError } from "./utils";
 
 export const init: RequestHandler = (_req, res, next) => {
   const nodeEnv = process.env.NODE_ENV ?? "local";

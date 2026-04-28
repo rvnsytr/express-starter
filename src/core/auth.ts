@@ -1,27 +1,30 @@
 import { userSchema } from "@/modules/auth/schema";
+import { appConfig } from "@/shared/config";
+import { ac, allRoles, defaultRole, roles } from "@/shared/permission";
 import { APIError, betterAuth } from "better-auth";
 import { createAuthMiddleware } from "better-auth/api";
 import { admin, openAPI } from "better-auth/plugins";
 import z from "zod";
-import { appMeta } from "./constants/app";
-import { messages } from "./constants/messages";
 import { createDialect, db } from "./db";
-import { ac, roles } from "./permission";
-import { getPresignedUrl, removeFiles } from "./storage";
+import { messages } from "./messages";
+import { getPresignedUrl, removeFiles } from "./s3";
+
+export type ACStatements = typeof ac.statements;
+export type Permissions = {
+  [K in keyof ACStatements]?: ACStatements[K][number][];
+};
 
 export type AuthSession = typeof auth.$Infer.Session;
 
-export type Role = (typeof allRoles)[number];
-export const allRoles = ["user", "admin"] as const;
-export const defaultRole: Role = "user";
-
 export const auth = betterAuth({
-  appName: appMeta.name,
+  appName: appConfig.name,
+
+  // secret: process.env.APP_KEY,
+  // baseURL: process.env.APP_URL,
+  trustedOrigins: [appConfig.cors.origin],
 
   database: { dialect: createDialect(), type: "mssql", casing: "snake" },
   experimental: { joins: true },
-
-  trustedOrigins: [appMeta.cors.origin],
 
   plugins: [
     openAPI(),
@@ -42,10 +45,11 @@ export const auth = betterAuth({
 
   emailAndPassword: {
     enabled: true,
+    autoSignIn: false,
     requireEmailVerification: true,
     // sendResetPassword: async ({ user, token }) => {
     //   const { name, email } = user;
-    //   const url = `${appMeta.cors.origin}/reset-password?token=${token}`;
+    //   const url = `${appConfig.cors.origin}/reset-password?token=${token}`;
     //   void novu.trigger("purnaku-reset-password", {
     //     to: { subscriberId: email, email },
     //     payload: { name, url },
@@ -53,7 +57,7 @@ export const auth = betterAuth({
     // },
     onPasswordReset: async ({ user }) => {
       await db
-        .insertInto("event_log")
+        .insertInto("activity")
         .values({ type: "password-reset", user_id: user.id })
         .execute();
     },
@@ -63,7 +67,7 @@ export const auth = betterAuth({
     sendOnSignUp: true,
     // sendVerificationEmail: async ({ user, token }) => {
     //   const { name, email } = user;
-    //   const url = `${appMeta.cors.origin}/verify-user?token=${token}`;
+    //   const url = `${appConfig.cors.origin}/verify-user?token=${token}`;
     //   void novu.trigger("purnaku-verification", {
     //     to: { subscriberId: email, email },
     //     payload: { name, url },
@@ -71,7 +75,7 @@ export const auth = betterAuth({
     // },
     afterEmailVerification: async (user) => {
       await db
-        .insertInto("event_log")
+        .insertInto("activity")
         .values({ type: "user-verified", user_id: user.id })
         .execute();
     },
@@ -86,7 +90,7 @@ export const auth = betterAuth({
           await db.transaction().execute(async (trx) => {
             if (session)
               await trx
-                .insertInto("event_log")
+                .insertInto("activity")
                 .values({
                   type: "admin-user-create",
                   user_id: session.user.id,
@@ -95,7 +99,7 @@ export const auth = betterAuth({
                 .execute();
 
             await trx
-              .insertInto("event_log")
+              .insertInto("activity")
               .values({
                 type: session ? "user-created" : "user-registered",
                 user_id: user.id,
@@ -113,22 +117,22 @@ export const auth = betterAuth({
           await db.transaction().execute(async (trx) => {
             if (user.image)
               await trx
-                .updateTable("storage")
+                .updateTable("files")
                 .set("deleted_by", session.user.id)
                 .where("id", "=", user.image)
                 .execute();
 
             await trx
-              .insertInto("event_log")
+              .insertInto("activity")
               .values({
-                type: "admin-user-remove",
+                type: "admin-user-delete",
                 user_id: session.user.id,
                 data: user.name,
               })
               .execute();
 
             // await trx
-            //   .insertInto("event_log")
+            //   .insertInto("activity")
             //   .values({ type: "user-removed", user_id: user.id })
             //   .execute();
 
@@ -148,7 +152,7 @@ export const auth = betterAuth({
     before: createAuthMiddleware(async (ctx) => {
       if (ctx.path === "/update-user" && ctx.body.image) {
         const res = await db
-          .selectFrom("storage")
+          .selectFrom("files")
           .select(["updated_at"])
           .where("id", "=", ctx.body.image)
           .executeTakeFirst();
@@ -173,7 +177,7 @@ export const auth = betterAuth({
         if (!userData.image) return ctx.json(session);
 
         const data = await db
-          .selectFrom("storage")
+          .selectFrom("files")
           .select("file_path")
           .where("id", "=", userData.image)
           .where("deleted_at", "is", null)
@@ -197,7 +201,7 @@ export const auth = betterAuth({
 
         if (imageId && isImageSame && ctx.body.updatedAt) {
           const res = await db
-            .selectFrom("storage")
+            .selectFrom("files")
             .select(["updated_at"])
             .where("id", "=", imageId)
             .executeTakeFirst();
@@ -207,7 +211,7 @@ export const auth = betterAuth({
 
         const res = await db.transaction().execute(async (trx) => {
           await trx
-            .insertInto("event_log")
+            .insertInto("activity")
             .values({
               type: isImageSame ? "profile-updated" : "profile-image-updated",
               user_id: user.id,
@@ -225,7 +229,7 @@ export const auth = betterAuth({
       if (ctx.path === "/change-password") {
         const user = getUser();
         await db
-          .insertInto("event_log")
+          .insertInto("activity")
           .values({ type: "password-changed", user_id: user.id })
           .execute();
       }
@@ -241,7 +245,7 @@ export const auth = betterAuth({
 
         await db.transaction().execute(async (trx) => {
           await trx
-            .insertInto("event_log")
+            .insertInto("activity")
             .values({
               type: isBan ? "admin-user-ban" : "admin-user-unban",
               user_id: session.user.id,
@@ -249,7 +253,7 @@ export const auth = betterAuth({
             })
             .execute();
           await trx
-            .insertInto("event_log")
+            .insertInto("activity")
             .values({
               type: isBan ? "user-banned" : "user-unbanned",
               user_id: parsedBody.userId,

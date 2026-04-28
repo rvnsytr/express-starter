@@ -1,6 +1,6 @@
 import { AuthSession } from "@/core/auth";
 import "express-serve-static-core";
-import { ApiErrorPayload, ApiSuccessPayload } from "./src/core/constants/types";
+import { ApiErrorPayload, ApiSuccessPayload } from "./src/core/types";
 
 declare global {
   namespace Express {

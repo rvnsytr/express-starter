@@ -1,17 +1,17 @@
 // Docs: https://www.kysely.dev/docs/getting-started
 
-import { Override } from "@/core/constants/types";
+import { Override } from "@/core/types";
 import { ColumnType, Generated } from "kysely";
 import z from "zod";
 
+import { activityTableSchema } from "@/modules/activity/schema";
 import {
   accountTableSchema,
   sessionTableSchema,
   userTableSchema,
   verificationTableSchema,
 } from "@/modules/auth/schema";
-import { eventLogTableSchema } from "@/modules/event-log/schema";
-import { storageTableSchema } from "@/modules/storage/schema";
+import { filesTableSchema } from "@/modules/files/schema";
 
 export type Database = {
   user: Override<
@@ -47,16 +47,16 @@ export type Database = {
     }
   >;
 
-  storage: Override<
-    z.infer<typeof storageTableSchema>,
+  files: Override<
+    z.infer<typeof filesTableSchema>,
     {
       updated_at: ColumnType<Date, never, Date>;
       created_at: Generated<Date>;
     }
   >;
 
-  event_log: Override<
-    z.infer<typeof eventLogTableSchema>,
+  activity: Override<
+    z.infer<typeof activityTableSchema>,
     {
       id: Generated<string>;
       created_at: Generated<Date>;

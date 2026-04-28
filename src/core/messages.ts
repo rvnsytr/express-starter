@@ -1,5 +1,9 @@
-import { formatDate, formatDateDistanceToNow } from "../utils/date";
-import { capitalize } from "../utils/formaters";
+import {
+  capitalize,
+  formatBytes,
+  formatDateDistanceToNow,
+  formatLocalizedDate,
+} from "./utils";
 
 export const messages = {
   actions: {
@@ -14,7 +18,7 @@ export const messages = {
     cancel: "Batal",
     clear: "Bersihkan",
     confirm: "Konfirmasi",
-    remove: "Hapus",
+    delete: "Hapus",
     reset: "Atur Ulang",
     save: "Simpan",
     update: "Simpan Perubahan",
@@ -24,17 +28,14 @@ export const messages = {
     next: "Selanjutnya",
   },
 
-  loading: "Mohon tunggu sebentar...",
+  loading: "Sedang memuat...",
+  success: "Sukses",
+  error: "Terjadi kesalahan",
+
   empty: "Tidak ada hasil yang ditemukan.",
   notFound: "Sumber daya yang diminta tidak ditemukan.",
-
-  error: "Terjadi kesalahan. Silakan coba lagi nanti.",
-
   unauthorized: "Tindakan tidak terautentikasi",
   forbidden: "Tidak memiliki izin untuk melakukan tindakan ini.",
-
-  removeLabel: (thing: string) =>
-    `Untuk mengonfirmasi, ketik "${thing}" pada kolom di bawah ini.`,
 
   noChanges: (thing: string) => `Tidak ada perubahan pada ${thing}.`,
   thingNotMatch: (thing: string) =>
@@ -43,7 +44,7 @@ export const messages = {
   thingAgo: (thing: string, time: Date) =>
     `${capitalize(thing, "first")} ${formatDateDistanceToNow(time)} yang lalu.`,
   dateRelative: (time: Date, mode: "future" | "past" = "past") =>
-    `${formatDate(time, "PPPp")} - ${formatDateDistanceToNow(time)} ${mode === "past" ? "yang lalu" : "dari sekarang"}.`,
+    `${formatLocalizedDate(time, "PPPp")} - ${formatDateDistanceToNow(time)} ${mode === "past" ? "yang lalu" : "dari sekarang"}.`,
 
   // -- Validation
   invalid: (field: string) => `${capitalize(field, "first")} tidak valid.`,
@@ -71,9 +72,9 @@ export const messages = {
 
   date: {
     tooEarly: (field: string, min: Date) =>
-      `${capitalize(field, "first")} tidak boleh lebih awal dari ${formatDate(min, "PPP")}.`,
+      `${capitalize(field, "first")} tidak boleh lebih awal dari ${formatLocalizedDate(min, "PPP")}.`,
     tooLate: (field: string, max: Date) =>
-      `${capitalize(field, "first")} tidak boleh lebih lambat dari ${formatDate(max, "PPP")}.`,
+      `${capitalize(field, "first")} tidak boleh lebih lambat dari ${formatLocalizedDate(max, "PPP")}.`,
     tooFew: (field: string, min: number) =>
       `${capitalize(field, "first")} harus terdiri dari minimal ${min} tanggal.`,
     tooMany: (field: string, max: number) =>
@@ -86,8 +87,8 @@ export const messages = {
       `Silakan unggah minimal ${min} ${field}.`,
     tooMany: (field: string, max: number) =>
       `Anda hanya dapat mengunggah hingga ${max} ${field}.`,
-    tooLarge: (field: string, sizeInMb: string | number) =>
-      `${capitalize(field, "first")} melebihi batas ukuran maksimum ${sizeInMb} MB.`,
+    tooLarge: (field: string, size: number) =>
+      `${capitalize(field, "first")} melebihi batas ukuran maksimum (${formatBytes(size)}).`,
   },
 
   password: {

@@ -3,26 +3,26 @@ import {
   withDataController,
 } from "@/core/data-controller";
 import { authorize, validateRequest } from "@/core/middlewares";
-import { transformKeys } from "@/core/utils/formaters";
+import { transformKeys } from "@/core/utils";
 import { Router } from "express";
 import z from "zod";
 import {
-  eventLogCountQuery,
-  getEventLogById,
-  getEventLogWDCConfig,
+  activityCountQuery,
+  getActivityById,
+  getActivityWDCConfig,
 } from "./actions";
 
 const router = Router();
 
 router.post(
   "/",
-  authorize({ event_log: ["list"] }),
+  authorize({ activity: ["list"] }),
   validateRequest({ body: dataControllerSchema }),
   async (req, res) => {
-    const dataDef = getEventLogWDCConfig();
+    const dataDef = getActivityWDCConfig();
 
     const count = await withDataController(req.body, {
-      queryBuilder: eventLogCountQuery,
+      queryBuilder: activityCountQuery,
       config: { ...dataDef.config, disabled: ["sorting", "pagination"] },
     }).executeTakeFirst();
 
@@ -34,21 +34,21 @@ router.post(
 
 router.post(
   "/me",
-  authorize({ event_log: ["list:own"] }),
+  authorize(),
   validateRequest({ body: dataControllerSchema }),
   async (req, res) =>
-    res.success(await getEventLogById(req.body, req.session!.user.id)),
+    res.success(await getActivityById(req.body, req.session!.user.id)),
 );
 
 router.post(
   "/:id",
-  authorize({ event_log: ["list:user"] }),
+  authorize({ activity: ["get"] }),
   validateRequest({
     params: z.object({ id: z.string() }),
     body: dataControllerSchema,
   }),
   async (req, res) =>
-    res.success(await getEventLogById(req.body, req.params.id)),
+    res.success(await getActivityById(req.body, req.params.id)),
 );
 
 export { router };

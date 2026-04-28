@@ -8,7 +8,7 @@ import {
   SqlBool,
 } from "kysely";
 import z from "zod";
-import { allFilterOperators, FilterOperators } from "./constants/data-filter";
+import { allFilterOperators, FilterOperators } from "./utils";
 
 export type DataController = z.infer<typeof dataControllerSchema>;
 export const dataControllerSchema = z
@@ -124,7 +124,7 @@ export function withDataController<DB, TB extends keyof DB, O>(
 
       state.columnFilters.forEach(({ id, value: { operator, values } }) => {
         const columnConfig = config.columns[id];
-        if (!columnConfig || !values.length) return;
+        if (!columnConfig || !values.length) return null;
 
         const { column, type, parser } = columnConfig;
         let parsedValues: (string | number | Date | boolean)[] = values;

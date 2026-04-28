@@ -6,31 +6,10 @@ export type OmitByType<T, V> = {
 
 type Count = ({ total: number } & Record<string, number>) | undefined;
 
-export type ActionResponse<T = null> = { count?: Count } & (
-  | { success: true; data: T }
-  | { success: false; message: string; error?: unknown }
-);
-
-export type ApiSuccessPayload<T = null> = {
-  code?: number;
-  message?: string;
+export type ActionResponse<T = unknown> = {
   count?: Count;
-  data?: T;
-};
-
-export type ApiErrorPayload = {
-  code?: number;
   message?: string;
-  error?: unknown;
-};
-
-export type RequestPart =
-  | "params"
-  | "query"
-  | "body"
-  | "headers"
-  | "cookies"
-  | "files";
+} & ({ success: true; data: T } | { success: false; error?: unknown });
 
 export type StringCase =
   | "kebab"
@@ -78,3 +57,24 @@ export type TransformKeys<
             : K]: TransformKeys<T[K], C>;
         }
       : T;
+
+export type ApiSuccessPayload<T = null> = {
+  code?: number;
+  message?: string;
+  count?: Count;
+  data?: T;
+};
+
+export type ApiErrorPayload = {
+  code?: number;
+  message?: string;
+  error?: unknown;
+};
+
+export type RequestPart =
+  | "params"
+  | "query"
+  | "body"
+  | "headers"
+  | "cookies"
+  | "files";

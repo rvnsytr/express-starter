@@ -1,13 +1,13 @@
 import z from "zod";
-import { allStorageCategories } from "./constants";
+import { allFileCategories } from "./config";
 
-export const storageTableSchema = z.object({
+export const filesTableSchema = z.object({
   id: z.uuidv4(),
 
-  file_name: z.string(),
-  category: z.enum(allStorageCategories),
+  category: z.enum(allFileCategories),
   file_path: z.string(),
-  mime_type: z.string(),
+  file_name: z.string(),
+  file_type: z.string(),
   file_size: z.number(),
 
   deleted_at: z.date().nullable().default(null),

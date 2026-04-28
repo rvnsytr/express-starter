@@ -1,17 +1,22 @@
-export type RequestMetaKey = (typeof allRequestMetaKey)[number];
-export const allRequestMetaKey = [
-  "basePath",
-  "href",
-  "origin",
-  "hostname",
-  "pathname",
-  "hash",
-  "search",
-] as const;
+import { CorsOptions } from "cors";
+
+export const appConfig = {
+  name: process.env.APP_NAME ?? "Express Starter",
+  defaultLanguage: "id",
+
+  baseUrl: "http://localhost:8000",
+  defaultFilesDirectory: "tmp",
+
+  cors: {
+    origin: "http://localhost:3000",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  } satisfies CorsOptions,
+};
 
 export type Gender = (typeof allGenders)[number];
 export const allGenders = ["m", "f"] as const;
-export const genderMeta: Record<
+export const genderConfig: Record<
   Gender,
   { displayName: string; color: string }
 > = {
@@ -21,7 +26,7 @@ export const genderMeta: Record<
 
 export type Language = (typeof allLanguages)[number];
 export const allLanguages = ["en", "id", "es", "fr", "de", "ar"] as const;
-export const languageMeta: Record<
+export const languageConfig: Record<
   Language,
   { locale: string; currency: string; decimal: number; symbol: string }
 > = {

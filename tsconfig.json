@@ -31,6 +31,12 @@
     "declarationMap": true
   },
 
-  "include": ["types.d.ts", "**/*.ts", "eslint.config.js", "types.d.ts"],
+  "include": [
+    "types.d.ts",
+    "**/*.ts",
+    "eslint.config.js",
+    "types.d.ts",
+    "src/core/s3"
+  ],
   "exclude": ["node_modules"]
 }

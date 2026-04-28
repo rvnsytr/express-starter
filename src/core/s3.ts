@@ -1,25 +1,21 @@
-import { appMeta } from "@/core/constants/app";
-import { allFileTypes, fileMeta } from "@/core/constants/file";
-import { ActionResponse } from "@/core/constants/types";
-import { db } from "@/core/db";
-import { sharedSchemas } from "@/core/schema.zod";
-import { formatZodError } from "@/core/utils/formaters";
-import { getFileParts } from "@/core/utils/helpers";
-import {
-  allStorageCategories,
-  StorageCategory,
-} from "@/modules/storage/constants";
-import { storageTableSchema } from "@/modules/storage/schema";
+import { allFileCategories, FileCategory } from "@/modules/files/config";
+import { filesTableSchema } from "@/modules/files/schema";
+import { appConfig } from "@/shared/config";
+import { Database } from "@/shared/db/schema";
+import { allFileTypes, fileTypeConfig } from "@/shared/file-type";
 import { Request } from "express";
 import { Kysely } from "kysely";
 import { Client } from "minio";
 import z from "zod";
-import { messages } from "./constants/messages";
-import { Database } from "./schema.db";
+import { db } from "./db";
+import { messages } from "./messages";
+import { sharedSchemas } from "./schema";
+import { ActionResponse } from "./types";
+import { formatZodError, getFileParts } from "./utils";
 
 const bucket = process.env.AWS_BUCKET!;
 const defaultDirectory =
-  process.env.AWS_DIRECTORY ?? appMeta.defaultStorageDirectory;
+  process.env.AWS_DIRECTORY ?? appConfig.defaultFilesDirectory;
 
 const s3 = new Client({
   endPoint: process.env.AWS_ENDPOINT!,
@@ -32,7 +28,7 @@ const s3 = new Client({
 type UploadFilesData = {
   id: string;
   fileName: string;
-  category: StorageCategory;
+  category: FileCategory;
   filePath: string;
   mimeType: string;
   fileSize: number;
@@ -47,9 +43,9 @@ const baseOptionSchema = z.object({
   prefix: z.string().default(""),
   suffix: z.string().default(""),
 
-  min: z.coerce.number().catch(0),
-  max: z.coerce.number().catch(0),
-  maxFileSize: z.coerce.number().catch(0),
+  minFiles: z.coerce.number().catch(0),
+  maxFiles: z.coerce.number().catch(0),
+  maxSize: z.coerce.number().catch(0),
 
   url: sharedSchemas.boolean().default(false),
   withExtension: sharedSchemas.boolean().default(true),
@@ -59,8 +55,8 @@ export type UploadFilesOptions = Partial<z.infer<typeof baseOptionSchema>> & {
   userId?: string;
 
   db?: Kysely<Database>;
-  category?: StorageCategory;
-  allowedCategories?: StorageCategory[];
+  category?: FileCategory;
+  allowedCategories?: FileCategory[];
   directory?: string;
 
   allowBodyOverride?: boolean;
@@ -111,7 +107,7 @@ export async function uploadFiles(
   const userId = parsedUserId.data;
   const database = options?.db ?? db;
   const isEnabled = options?.enabled ?? true;
-  const allowedCategories = options?.allowedCategories ?? allStorageCategories;
+  const allowedCategories = options?.allowedCategories ?? allFileCategories;
 
   const data: UploadFilesData[] = [];
 
@@ -124,13 +120,13 @@ export async function uploadFiles(
       buffer,
     } = file;
 
-    const categoryParse = storageTableSchema
+    const categoryParse = filesTableSchema
       .pick({ category: true })
       .refine((v) => allowedCategories.includes(v.category))
       .safeParse({ category: resolvedOptions.category ?? fieldname });
 
     if (!categoryParse.success) {
-      const { displayName } = fileMeta[resolvedOptions.fileType];
+      const { displayName } = fileTypeConfig[resolvedOptions.fileType];
       const message = `Kategori ${displayName} tidak valid pada field '${fieldname}'.`;
       return { ...formatZodError(categoryParse.error), message };
     }
@@ -152,7 +148,7 @@ export async function uploadFiles(
 
     if (isEnabled) {
       const exists = await database
-        .selectFrom("storage")
+        .selectFrom("files")
         .select("id")
         .where("file_path", "=", filePath)
         .executeTakeFirst();
@@ -160,7 +156,7 @@ export async function uploadFiles(
       if (exists) {
         id = exists.id;
         await database
-          .updateTable("storage")
+          .updateTable("files")
           .set("file_size", fileSize)
           .set("deleted_by", null)
           .set("deleted_at", null)
@@ -170,13 +166,13 @@ export async function uploadFiles(
           .executeTakeFirst();
       } else {
         await database
-          .insertInto("storage")
+          .insertInto("files")
           .values({
             id,
-            file_name: fileName,
             category: category,
+            file_name: fileName,
             file_path: filePath,
-            mime_type: mimeType,
+            file_type: mimeType,
             file_size: fileSize,
             created_by: userId,
           })
@@ -231,7 +227,7 @@ export async function removeFiles(
     let total = 0;
     if (!isDisabled) {
       const { numUpdatedRows } = await database
-        .updateTable("storage")
+        .updateTable("files")
         .set({ deleted_by: userId, deleted_at: new Date() })
         .where(searchBy, "in", keys)
         .executeTakeFirst();

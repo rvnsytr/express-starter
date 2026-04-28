@@ -6,8 +6,8 @@ import {
 } from "@/core/data-controller";
 import { countWhere, db } from "@/core/db";
 import { authorize, validateRequest } from "@/core/middlewares";
-import { getPresignedUrl } from "@/core/storage";
-import { transformKeys } from "@/core/utils/formaters";
+import { getPresignedUrl } from "@/core/s3";
+import { transformKeys } from "@/core/utils";
 import { toNodeHandler } from "better-auth/node";
 import { Router } from "express";
 
@@ -20,7 +20,7 @@ router.post(
   async (req, res) => {
     const baseQb = db
       .selectFrom("user as u")
-      .leftJoin("storage as s", "u.image", "s.id");
+      .leftJoin("files as f", "u.image", "f.id");
 
     const countQb = baseQb
       .select((eb) => eb.fn.countAll<number>().as("total"))
@@ -32,7 +32,7 @@ router.post(
       ]);
 
     const dataDef = defineWDCConfig({
-      queryBuilder: baseQb.selectAll("u").select("s.file_path"),
+      queryBuilder: baseQb.selectAll("u").select("f.file_path"),
       config: {
         columns: {
           name: { column: "u.name", type: "string" },

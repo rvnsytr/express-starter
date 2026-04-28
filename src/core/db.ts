@@ -1,7 +1,7 @@
+import { Database } from "@/shared/db/schema";
 import { Kysely, MssqlDialect, ParseJSONResultsPlugin, sql } from "kysely";
 import * as tarn from "tarn";
 import * as tedious from "tedious";
-import { Database } from "./schema.db";
 
 export type DBConfig = {
   host?: string;

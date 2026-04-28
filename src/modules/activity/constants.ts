@@ -1,13 +1,14 @@
-export type EventLogType = (typeof allEventLogType)[number];
-export const allEventLogType = [
+export type ActivityType = (typeof allActivityType)[number];
+export const allActivityType = [
   "user-registered",
   "user-created",
   // "user-imported",
   // "user-activated",
   "user-verified",
+  "user-role-updated",
   "user-banned",
   "user-unbanned",
-  // "user-removed",
+  // "user-deleted",
 
   "profile-updated",
   "profile-image-updated",
@@ -20,5 +21,6 @@ export const allEventLogType = [
   "admin-user-update-role",
   "admin-user-ban",
   "admin-user-unban",
-  "admin-user-remove",
+  "admin-user-delete",
+  "admin-users-delete",
 ] as const;

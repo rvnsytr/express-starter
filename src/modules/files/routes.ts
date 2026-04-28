@@ -1,28 +1,28 @@
 import { db } from "@/core/db";
 import { authorize, validateRequest } from "@/core/middlewares";
-import { sharedSchemas } from "@/core/schema.zod";
-import { getPresignedUrl, removeFiles, uploadFiles } from "@/core/storage";
-import { transformKeys } from "@/core/utils/formaters";
+import { getPresignedUrl, removeFiles, uploadFiles } from "@/core/s3";
+import { sharedSchemas } from "@/core/schema";
+import { transformKeys } from "@/core/utils";
 import { Router } from "express";
 import multer from "multer";
 import z from "zod";
-import { storageTableSchema } from "./schema";
+import { filesTableSchema } from "./schema";
 
 const router = Router();
 
 router.get(
   "/",
-  authorize({ storage: ["list"] }),
+  authorize({ files: ["list"] }),
   validateRequest({
     body: z.object({
       url: sharedSchemas.boolean("URL").optional().default(false),
-      category: storageTableSchema.shape.category.optional(),
+      category: filesTableSchema.shape.category.optional(),
     }),
   }),
   async (req, res) => {
     const { url: withUrl, category } = req.body;
 
-    let query = db.selectFrom("storage").selectAll();
+    let query = db.selectFrom("files").selectAll();
     if (category) query = query.where("category", "=", category);
 
     let result = await query.orderBy("created_at", (ob) => ob.desc()).execute();
@@ -43,11 +43,11 @@ router.get(
 
 router.post(
   "/presigned-url",
-  authorize({ storage: ["get"] }),
+  authorize({ files: ["get"] }),
   validateRequest({ body: z.object({ data: z.string().array() }) }),
   async (req, res) => {
     const result = await db
-      .selectFrom("storage")
+      .selectFrom("files")
       .select(["id", "file_path"])
       .where("id", "in", req.body.data)
       .execute();
@@ -65,7 +65,7 @@ router.post(
 
 router.post(
   "/",
-  authorize({ storage: ["create"] }),
+  authorize({ files: ["create"] }),
   multer().any(),
   async (req, res) => {
     const upload = await uploadFiles(req, {
@@ -83,7 +83,7 @@ router.post(
 
 router.delete(
   "/",
-  authorize({ storage: ["delete"] }),
+  authorize({ files: ["delete"] }),
   validateRequest({
     query: z.object({ by: z.enum(["id", "file_path"]).default("id") }),
     body: z.object({ ids: z.array(z.uuidv4()), userId: z.string() }),

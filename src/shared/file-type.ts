@@ -1,4 +1,4 @@
-import { toBytes } from "../utils/formaters";
+import { toBytes } from "@/core/utils";
 
 export type FileType = (typeof allFileTypes)[number];
 export const allFileTypes = [
@@ -14,120 +14,119 @@ export const allFileTypes = [
   "video",
 ] as const;
 
-type FileMetaProps = Record<
-  FileType,
-  {
-    displayName: string;
-    mimeTypes: string[];
-    extensions: string[];
-    size: { mb: number; bytes: number };
-  }
->;
+export type FileTypeConfig = {
+  displayName: string;
+  maxSize: number;
+  accept: string;
+  extensions: string[];
+};
 
-const meta: Omit<FileMetaProps, "file" | "office"> = {
+const config: Record<Exclude<FileType, "file" | "office">, FileTypeConfig> = {
   image: {
     displayName: "gambar",
-    mimeTypes: ["image/png", "image/jpeg", "image/svg+xml", "image/webp"],
+    maxSize: toBytes(2),
+    accept: "image/png, image/jpeg, image/svg+xml, image/webp",
     extensions: [".png", ".jpg", ".jpeg", ".svg", ".webp"],
-    size: { mb: 2, bytes: toBytes(2) },
   },
 
   pdf: {
     displayName: "PDF",
-    mimeTypes: ["application/pdf"],
+    maxSize: toBytes(2),
+    accept: "application/pdf",
     extensions: [".pdf"],
-    size: { mb: 2, bytes: toBytes(2) },
   },
 
   document: {
     displayName: "dokumen",
-    mimeTypes: [
+    maxSize: toBytes(2),
+    accept: [
       "application/msword",
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    ],
+    ].join(", "),
     extensions: [".doc", ".docx"],
-    size: { mb: 2, bytes: toBytes(2) },
   },
 
   spreadsheet: {
     displayName: "lembar kerja (spreadsheet)",
-    mimeTypes: [
+    maxSize: toBytes(2),
+    accept: [
       "application/vnd.ms-excel",
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    ],
+    ].join(", "),
     extensions: [".xls", ".xlsx"],
-    size: { mb: 2, bytes: toBytes(2) },
   },
 
   presentation: {
     displayName: "presentasi (ppt)",
-    mimeTypes: [
+    maxSize: toBytes(10),
+    accept: [
       "application/vnd.ms-powerpoint",
       "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-    ],
+    ].join(", "),
     extensions: [".ppt", ".pptx"],
-    size: { mb: 10, bytes: toBytes(10) },
   },
 
   archive: {
     displayName: "arsip",
-    mimeTypes: [
+    maxSize: toBytes(20),
+    accept: [
       "application/zip",
       "application/x-rar-compressed",
       "application/x-7z-compressed",
       "application/x-tar",
-    ],
+    ].join(", "),
     extensions: [".zip", ".rar", ".7z", ".tar"],
-    size: { mb: 20, bytes: toBytes(20) },
   },
 
   audio: {
     displayName: "audio",
-    mimeTypes: ["audio/mpeg", "audio/wav", "audio/ogg", "audio/flac"],
+    maxSize: toBytes(10),
+    accept: ["audio/mpeg", "audio/wav", "audio/ogg", "audio/flac"].join(", "),
     extensions: [".mp3", ".wav", ".ogg", ".flac"],
-    size: { mb: 10, bytes: toBytes(10) },
   },
 
   video: {
     displayName: "video",
-    mimeTypes: [
+    maxSize: toBytes(50),
+    accept: [
       "video/mp4",
       "video/x-msvideo",
       "video/x-matroska",
       "video/ogg",
       "video/webm",
-    ],
+    ].join(", "),
     extensions: [".mp4", ".avi", ".mkv", ".ogg", ".webm"],
-    size: { mb: 50, bytes: toBytes(50) },
   },
 };
 
-const maxFileSize = Math.max(...Object.values(meta).map(({ size }) => size.mb));
+export const maxFileSize = Math.max(
+  ...Object.values(config).map((c) => c.maxSize),
+);
 
-export const fileMeta: FileMetaProps = {
+export const fileTypeConfig: Record<FileType, FileTypeConfig> = {
   file: {
     displayName: "berkas",
-    mimeTypes: Object.values(meta).flatMap((item) => item.mimeTypes),
-    extensions: Object.values(meta).flatMap((item) => item.extensions),
-    size: { mb: maxFileSize, bytes: toBytes(maxFileSize) },
+    maxSize: maxFileSize,
+    accept: "*",
+    extensions: [],
   },
 
   office: {
     displayName: "dokumen kantor",
-    mimeTypes: [
-      ...meta.pdf.mimeTypes,
-      ...meta.document.mimeTypes,
-      ...meta.spreadsheet.mimeTypes,
-      ...meta.presentation.mimeTypes,
-    ],
+    maxSize: toBytes(10),
+    accept: [
+      ...config.pdf.accept,
+      ...config.document.accept,
+      ...config.spreadsheet.accept,
+      ...config.presentation.accept,
+    ].join(", "),
     extensions: [
-      ...meta.pdf.extensions,
-      ...meta.document.extensions,
-      ...meta.spreadsheet.extensions,
-      ...meta.presentation.extensions,
+      ...config.pdf.extensions,
+      ...config.document.extensions,
+      ...config.spreadsheet.extensions,
+      ...config.presentation.extensions,
     ],
-    size: { mb: 10, bytes: toBytes(10) },
   },
 
-  ...meta,
+  ...config,
 };

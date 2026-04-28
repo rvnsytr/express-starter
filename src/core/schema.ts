@@ -1,8 +1,15 @@
+import { allGenders } from "@/shared/config";
+import { FileType, fileTypeConfig } from "@/shared/file-type";
 import z from "zod";
-import { fileMeta, FileType } from "./constants/file";
-import { messages } from "./constants/messages";
-import { allGenders } from "./constants/metadata";
-import { toMegabytes } from "./utils/formaters";
+import { messages } from "./messages";
+
+type FilesSchemaOptions = {
+  minFiles?: number;
+  maxFiles?: number;
+  maxSize?: number;
+};
+
+type FileSchemaOptions = Pick<FilesSchemaOptions, "maxSize">;
 
 export const sharedSchemas = {
   string: (options?: {
@@ -56,7 +63,7 @@ export const sharedSchemas = {
     const withRequired = options?.withRequired ?? true;
 
     const invalidError = label && invalid(label);
-    let schema = z.coerce.number({ error: invalidError });
+    let schema = z.number({ error: invalidError });
 
     if (min > 0) {
       const error =
@@ -81,49 +88,96 @@ export const sharedSchemas = {
       );
   },
 
-  files: (
-    type: FileType,
-    options?: {
-      min?: number;
-      max?: number;
-      maxFileSize?: number;
-    },
-  ) => {
-    const { mimeInvalid, tooLarge, tooFew, tooMany } = messages.files;
-    const { displayName, size, mimeTypes } = fileMeta[type];
+  file: (type: FileType, options?: FileSchemaOptions) => {
+    const { mimeInvalid, tooLarge } = messages.files;
+    const {
+      displayName,
+      accept,
+      maxSize: defaultMaxSize,
+    } = fileTypeConfig[type];
 
-    const min = options?.min ?? 0;
-    const max = options?.max ?? 0;
+    const mimeTypes =
+      accept === "*" ? [] : accept.split(",").map((t) => t.trim());
+    const maxSize =
+      options?.maxSize && options.maxSize > 0
+        ? options.maxSize
+        : defaultMaxSize;
 
-    const mFS = options?.maxFileSize;
-    const maxFileSize = mFS && mFS > 0 ? mFS : size.bytes;
-    const maxFileSizeInMB = toMegabytes(maxFileSize).toFixed(2);
+    return z.object({
+      fieldname: z.string(),
+      originalname: z.string(),
+      encoding: z.string(),
+      buffer: z.instanceof(Buffer),
+      mimetype: z
+        .string()
+        .refine(
+          (v) => (mimeTypes.length === 0 ? true : mimeTypes.includes(v)),
+          { error: mimeInvalid(displayName) },
+        ),
+      size: z
+        .number()
+        .min(1)
+        .max(maxSize, { error: tooLarge(displayName, maxSize) }),
+      path: z.string().optional(),
+    });
+  },
 
-    let schema = z
-      .object({
-        fieldname: z.string(),
-        originalname: z.string(),
-        encoding: z.string(),
-        buffer: z.instanceof(Buffer),
-        mimetype: z.string().refine((v) => mimeTypes.includes(v), {
-          error: mimeInvalid(displayName),
-        }),
-        size: z
-          .number()
-          .min(1)
-          .max(maxFileSize, { error: tooLarge(displayName, maxFileSizeInMB) }),
-        path: z.string().optional(),
-      })
-      .array();
+  files(type: FileType, options?: FilesSchemaOptions) {
+    const { tooFew, tooMany } = messages.files;
+    const { displayName } = fileTypeConfig[type];
 
-    if (min > 0) {
-      const message = tooFew(displayName, min);
-      schema = schema.min(min, { error: message });
+    const minFiles = options?.minFiles ?? 0;
+    const maxFiles = options?.maxFiles ?? 0;
+
+    let schema = z.array(this.file(type, options));
+
+    if (minFiles > 0) {
+      const message = tooFew(displayName, minFiles);
+      schema = schema.min(minFiles, { error: message });
     }
 
-    if (max > 0) {
-      const message = tooMany(displayName, max);
-      schema = schema.max(max, { error: message });
+    if (maxFiles > 0) {
+      const message = tooMany(displayName, maxFiles);
+      schema = schema.max(maxFiles, { error: message });
+    }
+
+    return schema;
+  },
+
+  fileMetadata: z.object({
+    id: z.string(),
+    name: z.string(),
+    type: z.string(),
+    size: z.number(),
+    url: z.string(),
+  }),
+
+  fileWithPreview(type: FileType, options?: FileSchemaOptions) {
+    const fileSchema = this.file(type, options);
+    return z.object({
+      id: z.string(),
+      file: z.union([fileSchema, this.fileMetadata]),
+      preview: z.string().optional(),
+    });
+  },
+
+  filesWithPreview(type: FileType, options?: FilesSchemaOptions) {
+    const { tooFew, tooMany } = messages.files;
+    const { displayName } = fileTypeConfig[type];
+
+    const minFiles = options?.minFiles ?? 0;
+    const maxFiles = options?.maxFiles ?? 0;
+
+    let schema = z.array(this.fileWithPreview(type, options));
+
+    if (minFiles > 0) {
+      const message = tooFew(displayName, minFiles);
+      schema = schema.min(minFiles, { error: message });
+    }
+
+    if (maxFiles > 0) {
+      const message = tooMany(displayName, maxFiles);
+      schema = schema.max(maxFiles, { error: message });
     }
 
     return schema;
@@ -141,7 +195,7 @@ export const sharedSchemas = {
     const max = options?.max;
 
     const invalidError = label && messages.invalid(label);
-    let schema = z.coerce.date({ error: invalidError });
+    let schema = z.date({ error: invalidError });
 
     if (min) {
       const value = min === "now" ? new Date() : min;
@@ -160,31 +214,31 @@ export const sharedSchemas = {
 
   dateMultiple: (options?: {
     label?: string;
-    min?: number;
-    max?: number;
-    minDate?: Date | "now";
-    maxDate?: Date | "now";
+    min?: Date | "now";
+    max?: Date | "now";
+    minDate?: number;
+    maxDate?: number;
   }) => {
     const { invalid, required } = messages;
     const { tooEarly, tooLate, tooFew, tooMany } = messages.date;
 
     const label = options?.label ?? undefined;
-    const min = options?.min;
-    const max = options?.max;
     const minDate = options?.minDate;
     const maxDate = options?.maxDate;
+    const min = options?.min;
+    const max = options?.max;
 
     const invalidError = label && invalid(label);
     let dateSchema = z.date({ error: invalidError });
 
-    if (minDate) {
-      const value = minDate === "now" ? new Date() : minDate;
+    if (min) {
+      const value = min === "now" ? new Date() : min;
       const error = label && tooEarly(label, value);
       dateSchema = dateSchema.min(value, { error });
     }
 
-    if (maxDate) {
-      const value = maxDate === "now" ? new Date() : maxDate;
+    if (max) {
+      const value = max === "now" ? new Date() : max;
       const error = label && tooLate(label, value);
       dateSchema = dateSchema.max(value, { error });
     }
@@ -194,26 +248,50 @@ export const sharedSchemas = {
       : undefined;
     let schema = z.array(dateSchema, { error: arrayInvalidError });
 
-    if (min) {
-      const error = label && (min <= 1 ? required : tooFew)(label, min);
-      schema = schema.min(min, { error });
+    if (minDate) {
+      const error = label && (minDate <= 1 ? required : tooFew)(label, minDate);
+      schema = schema.min(minDate, { error });
     }
 
-    if (max) {
-      const error = label && tooMany(label, max);
-      schema = schema.max(max, { error });
+    if (maxDate) {
+      const error = label && tooMany(label, maxDate);
+      schema = schema.max(maxDate, { error });
     }
 
     return schema;
   },
 
-  dateRange: z.object(
-    {
-      from: z.date({ error: "Pilih tanggal mulai yang valid." }),
-      to: z.date({ error: "Pilih tanggal akhir yang valid." }),
-    },
-    { error: "Pilih rentang tanggal yang valid." },
-  ),
+  dateRange: (options?: {
+    label?: string;
+    min?: Date | "now";
+    max?: Date | "now";
+  }) => {
+    const { tooEarly, tooLate } = messages.date;
+
+    const label = options?.label ?? undefined;
+    const min = options?.min;
+    const max = options?.max;
+
+    let fromSchema = z.date({ error: "Pilih tanggal mulai yang valid." });
+    let toSchema = z.date({ error: "Pilih tanggal akhir yang valid." });
+
+    if (min) {
+      const value = min === "now" ? new Date() : min;
+      const error = label && tooEarly(label, value);
+      fromSchema = fromSchema.min(value, { error });
+    }
+
+    if (max) {
+      const value = max === "now" ? new Date() : max;
+      const error = label && tooLate(label, value);
+      toSchema = toSchema.max(value, { error });
+    }
+
+    return z.object(
+      { from: fromSchema, to: toSchema },
+      { error: "Pilih rentang tanggal yang valid." },
+    );
+  },
 
   jsonString: <T>(schema: z.ZodType<T>) =>
     z
@@ -249,9 +327,7 @@ export const sharedSchemas = {
     .regex(/[0-9]/, { error: messages.password.number })
     .regex(/[^A-Za-z0-9]/, { error: messages.password.character }),
 
-  gender: z.enum(allGenders, {
-    error: `${messages.invalid("Jenis kelamin")} Diharapkan salah satu dari ${allGenders.map((v) => `'${v}'`).join("/")}`,
-  }),
+  gender: z.enum(allGenders, { error: messages.invalid("Jenis kelamin") }),
 };
 
 export function withSchemaPrefix<P extends string, S extends z.ZodRawShape>(

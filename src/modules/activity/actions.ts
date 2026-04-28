@@ -4,10 +4,10 @@ import {
   withDataController,
 } from "@/core/data-controller";
 import { countWhere, db } from "@/core/db";
-import { transformKeys } from "@/core/utils/formaters";
-import { allEventLogType } from "./constants";
+import { transformKeys } from "@/core/utils";
+import { allActivityType } from "./constants";
 
-const eventLogQuery = db.selectFrom("event_log as el").select((eb) => [
+const activityQuery = db.selectFrom("activity as el").select((eb) => [
   "el.id",
   "el.type",
   "el.data",
@@ -19,7 +19,7 @@ const eventLogQuery = db.selectFrom("event_log as el").select((eb) => [
       "admin-user-create",
       "admin-user-ban",
       "admin-user-unban",
-      "admin-user-remove",
+      "admin-user-delete",
     ])
     .then(
       eb
@@ -32,18 +32,18 @@ const eventLogQuery = db.selectFrom("event_log as el").select((eb) => [
     .as("entity"),
 ]);
 
-export const eventLogCountQuery = db
-  .selectFrom("event_log as el")
+export const activityCountQuery = db
+  .selectFrom("activity as el")
   .select((eb) => eb.fn.countAll<number>().as("total"))
-  .select(allEventLogType.map((t) => countWhere(`el.type = '${t}'`).as(t)));
+  .select(allActivityType.map((t) => countWhere(`el.type = '${t}'`).as(t)));
 
-type EventLogQuery = typeof eventLogQuery;
+type ActivityQuery = typeof activityQuery;
 
-export function getEventLogWDCConfig(
-  getQB?: (qb: EventLogQuery) => EventLogQuery,
+export function getActivityWDCConfig(
+  getQB?: (qb: ActivityQuery) => ActivityQuery,
 ) {
   return defineWDCConfig({
-    queryBuilder: getQB?.(eventLogQuery) ?? eventLogQuery,
+    queryBuilder: getQB?.(activityQuery) ?? activityQuery,
     config: {
       columns: {
         type: { column: "el.type", type: "string" },
@@ -54,11 +54,11 @@ export function getEventLogWDCConfig(
   });
 }
 
-export async function getEventLogById(dc: DataController, id: string) {
-  const dataDef = getEventLogWDCConfig((qb) => qb.where("el.user_id", "=", id));
+export async function getActivityById(dc: DataController, id: string) {
+  const dataDef = getActivityWDCConfig((qb) => qb.where("el.user_id", "=", id));
 
   const count = await withDataController(dc, {
-    queryBuilder: eventLogCountQuery.where("el.user_id", "=", id),
+    queryBuilder: activityCountQuery.where("el.user_id", "=", id),
     config: { ...dataDef.config, disabled: ["sorting", "pagination"] },
   }).executeTakeFirst();
 

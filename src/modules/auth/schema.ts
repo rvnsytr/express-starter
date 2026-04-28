@@ -1,6 +1,6 @@
-import { allRoles } from "@/core/auth";
-import { sharedSchemas } from "@/core/schema.zod";
-import { transformKeys } from "@/core/utils/formaters";
+import { sharedSchemas } from "@/core/schema";
+import { transformKeys } from "@/core/utils";
+import { allRoles } from "@/shared/permission";
 import {
   accountSchema as betterAuthAccountSchema,
   sessionSchema as betterAuthSessionSchema,

@@ -1,4 +1,4 @@
-export type FilterDataType =
+export type DataFilterType =
   | "text"
   | "number"
   | "date"
