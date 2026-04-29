@@ -109,6 +109,7 @@ export const auth = betterAuth({
           });
         },
       },
+
       delete: {
         before: async (user, ctx) => {
           const session = ctx?.context.session;
@@ -124,17 +125,15 @@ export const auth = betterAuth({
 
             await trx
               .insertInto("activity")
-              .values({
-                type: "admin-user-delete",
-                user_id: session.user.id,
-                data: user.name,
-              })
+              .values([
+                {
+                  type: "admin-user-delete",
+                  user_id: session.user.id,
+                  data: user.name,
+                },
+                // { type: "user-removed", user_id: user.id },
+              ])
               .execute();
-
-            // await trx
-            //   .insertInto("activity")
-            //   .values({ type: "user-removed", user_id: user.id })
-            //   .execute();
 
             // auth.api.adminUpdateUser({
             //   headers: ctx.headers,
@@ -160,8 +159,10 @@ export const auth = betterAuth({
         if (updatedAt)
           return { context: { ...ctx, body: { ...ctx.body, updatedAt } } };
       }
+
       return ctx;
     }),
+
     after: createAuthMiddleware(async (ctx) => {
       const { session, newSession } = ctx.context;
 
@@ -232,6 +233,12 @@ export const auth = betterAuth({
           .insertInto("activity")
           .values({ type: "password-changed", user_id: user.id })
           .execute();
+      }
+
+      // TODO
+      if (ctx.path === "/admin/set-role") {
+        // const user = getUser();
+        console.log(ctx.body);
       }
 
       if (ctx.path === "/admin/ban-user" || ctx.path === "/admin/unban-user") {

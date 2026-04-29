@@ -14,6 +14,13 @@ export type DataController = z.infer<typeof dataControllerSchema>;
 export const dataControllerSchema = z
   .object({
     globalFilter: z.string().default(""),
+    pagination: z
+      .object({ pageIndex: z.number(), pageSize: z.number() })
+      .default({ pageIndex: 0, pageSize: 10 }),
+    sorting: z
+      .object({ id: z.string(), desc: z.boolean() })
+      .array()
+      .default([]),
     columnFilters: z
       .object({
         id: z.string(),
@@ -24,19 +31,12 @@ export const dataControllerSchema = z
       })
       .array()
       .default([]),
-    sorting: z
-      .object({ id: z.string(), desc: z.boolean() })
-      .array()
-      .default([]),
-    pagination: z
-      .object({ pageIndex: z.number(), pageSize: z.number() })
-      .default({ pageIndex: 0, pageSize: 10 }),
   })
   .default({
     globalFilter: "",
-    columnFilters: [],
-    sorting: [],
     pagination: { pageIndex: 0, pageSize: 10 },
+    sorting: [],
+    columnFilters: [],
   });
 
 type WDCColumnConfig<DB, TB extends keyof DB> = {
