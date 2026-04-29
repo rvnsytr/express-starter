@@ -94,7 +94,7 @@ export async function uploadFiles(
 
   const parsedUserId = sharedSchemas
     .string({ min: 1 })
-    .safeParse(options?.userId ?? req.session?.user.id);
+    .safeParse(resolvedOptions?.userId ?? req.session?.user.id);
   if (!parsedUserId.success)
     return { success: false, message: `[userId]: ${messages.unauthorized}` };
 
@@ -105,9 +105,10 @@ export async function uploadFiles(
     return formatZodError(parsedFiles.error, { part: "files", withPath: true });
 
   const userId = parsedUserId.data;
-  const database = options?.db ?? db;
-  const isEnabled = options?.enabled ?? true;
-  const allowedCategories = options?.allowedCategories ?? allFileCategories;
+  const database = resolvedOptions?.db ?? db;
+  const isEnabled = resolvedOptions?.enabled ?? true;
+  const allowedCategories =
+    resolvedOptions?.allowedCategories ?? allFileCategories;
 
   const data: UploadFilesData[] = [];
 
@@ -172,7 +173,7 @@ export async function uploadFiles(
             category: category,
             file_name: fileName,
             file_path: filePath,
-            file_type: mimeType,
+            mime_type: mimeType,
             file_size: fileSize,
             created_by: userId,
           })

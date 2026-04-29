@@ -7,7 +7,7 @@ export const filesTableSchema = z.object({
   category: z.enum(allFileCategories),
   file_path: z.string(),
   file_name: z.string(),
-  file_type: z.string(),
+  mime_type: z.string(),
   file_size: z.number(),
 
   deleted_at: z.date().nullable().default(null),

@@ -69,7 +69,7 @@ CREATE TABLE [files] (
     category NVARCHAR(36) NOT NULL, -- e.g. 'image', 'id_card'
     file_path NVARCHAR(500) NULL,
     file_name NVARCHAR(255) NOT NULL,
-    file_type NVARCHAR(50) NOT NULL,
+    mime_type NVARCHAR(50) NOT NULL,
     file_size BIGINT NOT NULL,
 
     deleted_by NVARCHAR(36) NULL REFERENCES [user](id),
