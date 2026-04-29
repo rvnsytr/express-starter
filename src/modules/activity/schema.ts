@@ -1,7 +1,7 @@
 import { messages } from "@/core/messages";
 import z from "zod";
 import { userSchema } from "../auth/schema";
-import { allActivityType } from "./constants";
+import { allActivityType } from "./config";
 
 export const activityTableSchema = z.object({
   id: z.uuidv4(),

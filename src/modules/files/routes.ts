@@ -69,7 +69,7 @@ router.post(
   multer().any(),
   async (req, res) => {
     const upload = await uploadFiles(req, {
-      allowedCategories: ["image"],
+      allowedCategories: ["avatar"],
       allowBodyOverride: true,
       enabled: false,
     });

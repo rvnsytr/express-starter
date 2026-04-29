@@ -246,18 +246,17 @@ export const auth = betterAuth({
         await db.transaction().execute(async (trx) => {
           await trx
             .insertInto("activity")
-            .values({
-              type: isBan ? "admin-user-ban" : "admin-user-unban",
-              user_id: session.user.id,
-              entity_id: parsedBody.userId,
-            })
-            .execute();
-          await trx
-            .insertInto("activity")
-            .values({
-              type: isBan ? "user-banned" : "user-unbanned",
-              user_id: parsedBody.userId,
-            })
+            .values([
+              {
+                type: isBan ? "user-banned" : "user-unbanned",
+                user_id: parsedBody.userId,
+              },
+              {
+                type: isBan ? "admin-user-ban" : "admin-user-unban",
+                user_id: session.user.id,
+                entity_id: parsedBody.userId,
+              },
+            ])
             .execute();
         });
       }

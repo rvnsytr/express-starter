@@ -1,2 +1,2 @@
 export type FileCategory = (typeof allFileCategories)[number];
-export const allFileCategories = ["image"] as const;
+export const allFileCategories = ["avatar"] as const;
