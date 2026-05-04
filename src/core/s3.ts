@@ -1,5 +1,8 @@
-import { allFileCategories, FileCategory } from "@/modules/files/config";
-import { filesTableSchema } from "@/modules/files/schema";
+import {
+  allFileCategories,
+  FileCategory,
+  filesTableSchema,
+} from "@/modules/files/schema";
 import { appConfig } from "@/shared/config";
 import { Database } from "@/shared/db/schema";
 import { allFileTypes, fileTypeConfig } from "@/shared/file-type";
@@ -11,7 +14,7 @@ import { db } from "./db";
 import { messages } from "./messages";
 import { sharedSchemas } from "./schema";
 import { ActionResponse } from "./types";
-import { formatZodError, getFileParts } from "./utils";
+import { formatZodError, getFileNameParts } from "./utils";
 
 const bucket = process.env.AWS_BUCKET!;
 const defaultDirectory =
@@ -134,7 +137,7 @@ export async function uploadFiles(
 
     let id = crypto.randomUUID().toUpperCase();
     const { fileName: originalFileName, extension } =
-      getFileParts(originalname);
+      getFileNameParts(originalname);
 
     const now = resolvedOptions.unique ? Date.now().toString() : "";
     const prefix = resolvedOptions.prefix;

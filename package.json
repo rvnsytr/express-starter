@@ -3,6 +3,7 @@
   "scripts": {
     "dev": "nodemon --exec tsx src/index.ts",
     "build": "tsdown src/index.ts --format esm --dts",
+    "build:strict": "tsc --noEmit --extendedDiagnostics && tsdown src/index.ts --format esm --dts",
     "build:bun": "tsc --noEmit --extendedDiagnostics && bun build src/index.ts --outdir dist --target node --format esm",
     "lint": "eslint .",
     "start": "node dist/index.mjs",
@@ -17,12 +18,12 @@
     "dotenv": "^17.4.2",
     "exceljs": "^4.4.0",
     "express": "^5.2.1",
-    "kysely": "^0.28.16",
+    "kysely": "^0.28.17",
     "minio": "^8.0.7",
     "multer": "^2.1.1",
     "tarn": "^3.0.2",
     "tedious": "^19.2.1",
-    "zod": "^4.3.6"
+    "zod": "^4.4.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",

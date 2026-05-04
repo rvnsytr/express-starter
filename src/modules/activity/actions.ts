@@ -5,7 +5,7 @@ import {
 } from "@/core/data-controller";
 import { countWhere, db } from "@/core/db";
 import { transformKeys } from "@/core/utils";
-import { allActivityType } from "./config";
+import { allActivityType } from "./schema";
 
 const activityQuery = db.selectFrom("activity as el").select((eb) => [
   "el.id",

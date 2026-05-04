@@ -49,7 +49,7 @@ export const delayHandler: RequestHandler = async (_req, _res, next) => {
 };
 
 export const notFoundHandler: RequestHandler = (_req, res) => {
-  return res.error({ code: 404, message: messages.notFound });
+  return res.error({ code: 404, message: messages.notFound("Sumber daya") });
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
