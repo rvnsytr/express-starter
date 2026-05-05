@@ -8,7 +8,7 @@ import { errorHandler, init, notFoundHandler } from "./core/middlewares";
 import { router as eventLogRoutes } from "./modules/activity/routes";
 import { router as authRoutes } from "./modules/auth/routes";
 import { router as filesRoutes } from "./modules/files/routes";
-import { appConfig } from "./shared/config";
+import { appConfig } from "./shared/config/app";
 
 const app = express();
 const port = process.env.PORT ?? 8000;

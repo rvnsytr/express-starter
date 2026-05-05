@@ -1,5 +1,5 @@
 import { userSchema } from "@/modules/auth/schema";
-import { appConfig } from "@/shared/config";
+import { appConfig } from "@/shared/config/app";
 import { ac, allRoles, defaultRole, roles } from "@/shared/permission";
 import { APIError, betterAuth } from "better-auth";
 import { createAuthMiddleware } from "better-auth/api";
@@ -15,6 +15,8 @@ export type Permissions = {
 };
 
 export type AuthSession = typeof auth.$Infer.Session;
+export type Session = AuthSession["session"];
+export type User = AuthSession["user"];
 
 export const auth = betterAuth({
   appName: appConfig.name,
