@@ -1,5 +1,10 @@
 {
-  // "files.readonlyInclude": { "**/core/**": true },
+  "files.readonlyInclude": {
+    "**/core/**": true,
+    "**/modules/auth/**": true,
+    "**/modules/activity/**": true,
+    "**/modules/files/**": true
+  },
 
   "files.watcherExclude": { "**/bruno/**": true },
   "search.exclude": { "**/bruno/**": true, "**/dist/**": true },
