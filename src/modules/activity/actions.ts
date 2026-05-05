@@ -5,7 +5,7 @@ import {
 } from "@/core/data-controller";
 import { countWhere, db } from "@/core/db";
 import { transformKeys } from "@/core/utils";
-import { allActivityType } from "./schema";
+import { allActivityTypes } from "./schema";
 
 const activityQuery = db.selectFrom("activity as el").select((eb) => [
   "el.id",
@@ -35,7 +35,7 @@ const activityQuery = db.selectFrom("activity as el").select((eb) => [
 export const activityCountQuery = db
   .selectFrom("activity as el")
   .select((eb) => eb.fn.countAll<number>().as("total"))
-  .select(allActivityType.map((t) => countWhere(`el.type = '${t}'`).as(t)));
+  .select(allActivityTypes.map((t) => countWhere(`el.type = '${t}'`).as(t)));
 
 type ActivityQuery = typeof activityQuery;
 
