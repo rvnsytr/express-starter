@@ -39,7 +39,16 @@ export function getExcelColumnKey(columnNumber: number): string {
   return !!result ? result : "-";
 }
 
-export function getFileParts(originalFileName: string) {
+export function getFileInfo(file: File) {
+  return {
+    name: file.name,
+    size: file.size,
+    type: file.type ?? "",
+    extension: `.${file.name.split(".").pop()}`,
+  };
+}
+
+export function getFileNameParts(originalFileName: string) {
   const parts = originalFileName.split(".");
   const fileName = parts.slice(0, -1).join(".");
   const extension = parts.at(-1) ?? "";

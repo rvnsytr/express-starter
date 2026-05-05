@@ -1,5 +1,7 @@
 import z from "zod";
-import { allFileCategories } from "./config";
+
+export type FileCategory = (typeof allFileCategories)[number];
+export const allFileCategories = ["avatar"] as const;
 
 export const filesTableSchema = z.object({
   id: z.uuidv4(),

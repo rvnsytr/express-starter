@@ -1,10 +1,13 @@
+import z from "zod";
+import { sharedSchemas } from "./schema";
+
 export type Override<T, U> = Omit<T, keyof U> & U;
 
 export type OmitByType<T, V> = {
   [K in keyof T as T[K] extends V ? never : K]: T[K];
 };
 
-type Count = ({ total: number } & Record<string, number>) | undefined;
+export type Count = ({ total: number } & Record<string, number>) | undefined;
 
 export type ActionResponse<T = unknown> = {
   count?: Count;
@@ -57,6 +60,11 @@ export type TransformKeys<
             : K]: TransformKeys<T[K], C>;
         }
       : T;
+
+export type FileMetadata = z.infer<typeof sharedSchemas.fileMetadata>;
+export type FileWithPreview = z.infer<
+  ReturnType<typeof sharedSchemas.fileWithPreview>
+>;
 
 export type ApiSuccessPayload<T = null> = {
   code?: number;
