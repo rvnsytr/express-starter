@@ -1,9 +1,16 @@
+import z from "zod";
+import { FileMetadata } from "../types";
+
 export function delay(seconds: number) {
   return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
 }
 
 export function clamp(num: number, min: number, max: number) {
   return Math.min(Math.max(num, min), max);
+}
+
+export function isValidUrl(url: string) {
+  return z.url().safeParse(url).success;
 }
 
 export function getRandomString(length: number) {
@@ -39,7 +46,7 @@ export function getExcelColumnKey(columnNumber: number): string {
   return !!result ? result : "-";
 }
 
-export function getFileInfo(file: File) {
+export function getFileInfo(file: File | FileMetadata) {
   return {
     name: file.name,
     size: file.size,

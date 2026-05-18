@@ -242,6 +242,6 @@ export async function removeFiles(
   } catch (e) {
     const message =
       e instanceof Error ? e.message : "Terjadi kesalahan saat menghapus file.";
-    return { success: false, count: { total: 0 }, message, error: e };
+    return { success: false, message, error: e };
   }
 }

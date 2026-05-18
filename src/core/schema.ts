@@ -110,10 +110,9 @@ export const sharedSchemas = {
       buffer: z.instanceof(Buffer),
       mimetype: z
         .string()
-        .refine(
-          (v) => (mimeTypes.length === 0 ? true : mimeTypes.includes(v)),
-          { error: mimeInvalid(displayName) },
-        ),
+        .refine((v) => (mimeTypes.length ? mimeTypes.includes(v) : true), {
+          error: mimeInvalid(displayName),
+        }),
       size: z
         .number()
         .min(1)
@@ -146,6 +145,7 @@ export const sharedSchemas = {
 
   fileMetadata: z.object({
     id: z.string(),
+    path: z.string(),
     name: z.string(),
     type: z.string(),
     size: z.number(),
