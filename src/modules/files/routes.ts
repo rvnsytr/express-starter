@@ -5,7 +5,7 @@ import { sharedSchemas } from "@/core/schema";
 import { Router } from "express";
 import multer from "multer";
 import z from "zod";
-import { filesTableSchema } from "./schema";
+import { allFileCategories, filesTableSchema } from "./schema";
 
 const router = Router();
 
@@ -68,9 +68,9 @@ router.post(
   multer().any(),
   async (req, res) => {
     const upload = await uploadFiles(req, {
-      allowedCategories: ["avatar"],
+      allowedCategories: [...allFileCategories],
       allowBodyOverride: true,
-      enabled: false,
+      // enabled: false,
     });
 
     if (!upload.success) return res.success({ code: 400, ...upload });

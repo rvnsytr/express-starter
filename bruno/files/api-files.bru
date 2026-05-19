@@ -1,11 +1,11 @@
 meta {
-  name: /api/storage
+  name: /api/files
   type: http
   seq: 1
 }
 
 post {
-  url: {{host}}/api/storage
+  url: {{host}}/api/files
   body: multipartForm
   auth: none
 }
@@ -16,7 +16,7 @@ params:query {
 }
 
 body:multipart-form {
-  file: @file(/home/ravensky/Pictures/WhatsApp Image 2025-11-06 at 8.31.43 AM.jpeg)
+  file: @file(/home/ravensky/Pictures/IMG-20240528-WA0022.jpg)
 }
 
 settings {
