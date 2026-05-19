@@ -1,6 +1,7 @@
 import { appConfig } from "@/shared/config/app";
 import { Language, languageConfig } from "@/shared/config/language";
 import z from "zod";
+import { messages } from "../messages";
 import {
   ActionError,
   RequestPart,
@@ -145,15 +146,21 @@ export function formatZodError<T>(
   zodError: z.ZodError<T>,
   options?: { part?: RequestPart; withPath?: boolean },
 ): ActionError {
+  const success = false;
+  const error = z.treeifyError(zodError);
+
+  if (!zodError.issues.length)
+    return { success, message: messages.error, error };
+
   const firstIssue = zodError.issues[0];
   let message = firstIssue?.message ?? "Validation error";
 
   if (options?.withPath && firstIssue?.path.length) {
-    const paths = firstIssue.path.filter(Boolean);
+    const paths = [options?.part, ...firstIssue.path].filter(Boolean);
     message = `[${paths.join(".")}] ${firstIssue.message}`;
   }
 
-  return { success: false, message, error: z.treeifyError(zodError) };
+  return { success, message, error: z.treeifyError(zodError) };
 }
 
 export type FormatCsvRangeOptions = {

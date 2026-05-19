@@ -2,7 +2,6 @@ import { db } from "@/core/db";
 import { authorize, validateRequest } from "@/core/middlewares";
 import { getPresignedUrl, removeFiles, uploadFiles } from "@/core/s3";
 import { sharedSchemas } from "@/core/schema";
-import { transformKeys } from "@/core/utils";
 import { Router } from "express";
 import multer from "multer";
 import z from "zod";
@@ -25,11 +24,11 @@ router.get(
     let query = db.selectFrom("files").selectAll();
     if (category) query = query.where("category", "=", category);
 
-    let result = await query.orderBy("created_at", (ob) => ob.desc()).execute();
+    let data = await query.orderBy("created_at", (ob) => ob.desc()).execute();
 
     if (withUrl) {
-      result = await Promise.all(
-        result.map(async (f) => {
+      data = await Promise.all(
+        data.map(async (f) => {
           const fileName = f.file_name;
           const fileUrl = await getPresignedUrl(f.file_path, { fileName });
           return { ...f, fileUrl };
@@ -37,7 +36,7 @@ router.get(
       );
     }
 
-    return res.success({ data: transformKeys(result, "camel") });
+    return res.success({ data });
   },
 );
 

@@ -5,7 +5,7 @@ import z from "zod";
 import { id } from "zod/locales";
 import { errorHandler, init, notFoundHandler } from "./core/middlewares";
 
-import { router as eventLogRoutes } from "./modules/activity/routes";
+import { router as activityRoutes } from "./modules/activity/routes";
 import { router as authRoutes } from "./modules/auth/routes";
 import { router as filesRoutes } from "./modules/files/routes";
 import { appConfig } from "./shared/config/app";
@@ -25,7 +25,7 @@ app.get("/api", (_, res) =>
   res.success({ code: 301, message: `Hello, ${appConfig.name}` }),
 );
 app.use("/api/files", filesRoutes);
-app.use("/api/event-log", eventLogRoutes);
+app.use("/api/activities", activityRoutes);
 
 app.all("/*splat", notFoundHandler);
 app.use(errorHandler);

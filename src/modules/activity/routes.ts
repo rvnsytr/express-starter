@@ -3,7 +3,6 @@ import {
   withDataController,
 } from "@/core/data-controller";
 import { authorize, validateRequest } from "@/core/middlewares";
-import { transformKeys } from "@/core/utils";
 import { Router } from "express";
 import z from "zod";
 import {
@@ -28,7 +27,7 @@ router.post(
 
     const data = await withDataController(req.body, dataDef).execute();
 
-    return res.success({ count, data: transformKeys(data, "camel") });
+    return res.success({ count, data });
   },
 );
 
