@@ -16,7 +16,9 @@ const activityQuery = db.selectFrom("activity as ac").select((eb) => [
     .case()
     .when("ac.type", "in", [
       "user-created",
+
       "admin-user-create",
+      "admin-user-update-role",
       "admin-user-ban",
       "admin-user-unban",
       "admin-user-delete",

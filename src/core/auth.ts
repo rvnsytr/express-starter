@@ -237,10 +237,35 @@ export const auth = betterAuth({
           .execute();
       }
 
-      // TODO
       if (ctx.path === "/admin/set-role") {
-        // const user = getUser();
-        console.log(ctx.body);
+        const user = getUser();
+
+        const parsed = userSchema
+          .pick({ role: true })
+          .extend({
+            userId: z.string(),
+          })
+          .safeParse(ctx.body);
+
+        if (!parsed.success) throw new APIError("BAD_REQUEST");
+
+        await db
+          .insertInto("activity")
+          .values([
+            {
+              type: "admin-user-update-role",
+              user_id: user.id,
+              entity_id: parsed.data.userId,
+              data: parsed.data.role,
+            },
+            {
+              type: "user-role-updated",
+              user_id: parsed.data.userId,
+              entity_id: user.id,
+              data: parsed.data.role,
+            },
+          ])
+          .execute();
       }
 
       if (ctx.path === "/admin/ban-user" || ctx.path === "/admin/unban-user") {
