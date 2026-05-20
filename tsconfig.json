@@ -23,20 +23,9 @@
     "noUncheckedSideEffectImports": true,
 
     "rootDir": "./src",
-    "outDir": "./dist",
-
-    // Other Outputs
-    "sourceMap": true,
-    "declaration": true,
-    "declarationMap": true
+    "outDir": "./dist"
   },
 
-  "include": [
-    "types.d.ts",
-    "**/*.ts",
-    "eslint.config.js",
-    "types.d.ts",
-    "src/core/s3"
-  ],
+  "include": ["types.d.ts", "**/*.ts", "eslint.config.js", "types.d.ts"],
   "exclude": ["node_modules"]
 }

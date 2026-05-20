@@ -1,6 +1,6 @@
 import Excel from "exceljs";
-import { promises } from "fs";
-import path from "path";
+import { promises } from "node:fs";
+import path from "node:path";
 import z, { ZodType } from "zod";
 import { sharedSchemas } from "./schema";
 import { ActionResponse } from "./types";
