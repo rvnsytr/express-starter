@@ -1,4 +1,4 @@
-import { allGenders } from "@/shared/config/gender";
+import { allGenders } from "@/shared/config";
 import { FileType, fileTypeConfig } from "@/shared/file-type";
 import z from "zod";
 import { messages } from "./messages";

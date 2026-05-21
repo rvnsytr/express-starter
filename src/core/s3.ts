@@ -3,7 +3,7 @@ import {
   FileCategory,
   filesTableSchema,
 } from "@/modules/files/schema";
-import { appConfig } from "@/shared/config/app";
+import { appConfig } from "@/shared/config";
 import { Database } from "@/shared/db/schema";
 import { allFileTypes, fileTypeConfig } from "@/shared/file-type";
 import { Request } from "express";

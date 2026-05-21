@@ -1,5 +1,5 @@
 import { userSchema } from "@/modules/auth/schema";
-import { appConfig } from "@/shared/config/app";
+import { appConfig } from "@/shared/config";
 import { ac, allRoles, defaultRole, roles } from "@/shared/permission";
 import { APIError, betterAuth } from "better-auth";
 import { createAuthMiddleware } from "better-auth/api";
