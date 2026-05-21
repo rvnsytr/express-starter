@@ -3,9 +3,8 @@ import {
   FileCategory,
   filesTableSchema,
 } from "@/modules/files/schema";
-import { appConfig } from "@/shared/config";
+import { allFileTypes, appConfig, fileTypeConfig } from "@/shared/config";
 import { Database } from "@/shared/db/schema";
-import { allFileTypes, fileTypeConfig } from "@/shared/file-type";
 import { Request } from "express";
 import { Kysely } from "kysely";
 import { Client } from "minio";
