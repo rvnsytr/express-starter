@@ -2,8 +2,8 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon --exec tsx src/index.ts",
-    "build": "tsdown src/index.ts --format esm --dts",
-    "build:strict": "tsc --noEmit --extendedDiagnostics && tsdown src/index.ts --format esm --dts",
+    "build": "tsdown src/index.ts --format esm --dts --no-config",
+    "build:strict": "tsc --noEmit --extendedDiagnostics && tsdown src/index.ts --format esm --dts --no-config",
     "build:bun": "tsc --noEmit --extendedDiagnostics && bun build src/index.ts --outdir dist --target node --format esm",
     "lint": "eslint .",
     "start": "node dist/index.mjs",
@@ -18,7 +18,7 @@
     "dotenv": "^17.4.2",
     "exceljs": "^4.4.0",
     "express": "^5.2.1",
-    "kysely": "^0.28.17",
+    "kysely": "^0.29.2",
     "minio": "^8.0.7",
     "multer": "^2.1.1",
     "tarn": "^3.0.2",
@@ -30,13 +30,13 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/multer": "^2.1.0",
-    "@types/node": "^24.12.4",
-    "eslint": "^9.39.4",
+    "@types/node": "^25.9.1",
+    "eslint": "^10.4.0",
     "nodemon": "^3.1.14",
     "prettier": "^3.8.3",
     "prettier-plugin-organize-imports": "^4.3.0",
-    "tsdown": "^0.20.3",
-    "tsx": "^4.22.2",
+    "tsdown": "^0.22.0",
+    "tsx": "^4.22.3",
     "typescript": "^6.0.3"
   }
 }
