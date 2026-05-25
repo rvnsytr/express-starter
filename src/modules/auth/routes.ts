@@ -10,6 +10,7 @@ import { getPresignedUrl } from "@/core/s3";
 import { transformKeys } from "@/core/utils";
 import { toNodeHandler } from "better-auth/node";
 import { Router } from "express";
+import { sql } from "kysely";
 
 const router = Router();
 
@@ -25,10 +26,11 @@ router.post(
     const countQb = baseQb
       .select((eb) => eb.fn.countAll<number>().as("total"))
       .select([
-        countWhere("u.role = 'user'").as("user"),
-        countWhere("u.role = 'admin'").as("admin"),
-        countWhere("u.banned = 1").as("banned"),
-        countWhere("u.banned = 0").as("active"),
+        countWhere(sql`u.role = 'user'`).as("user"),
+        countWhere(sql`u.role = 'admin'`).as("admin"),
+        countWhere(sql`u.banned = 1`).as("banned"),
+        countWhere(sql`u.banned = 0 AND u.email_verified = 0`).as("active"),
+        countWhere(sql`u.banned = 0 AND u.email_verified = 1`).as("verified"),
       ]);
 
     const dataDef = defineWDCConfig({
@@ -67,7 +69,22 @@ router.post(
       })),
     );
 
+    // const rows = await db
+    //   .selectFrom("user as u")
+    //   .leftJoin("files as f", "u.image", "f.id")
+    //   .selectAll("u")
+    //   .select("f.file_path")
+    //   .execute();
+
+    // const data = await Promise.all(
+    //   rows.map(async ({ file_path, ...rest }) => ({
+    //     ...rest,
+    //     image: file_path ? await getPresignedUrl(file_path) : null,
+    //   })),
+    // );
+
     return res.success({ count, data: transformKeys(data, "camel") });
+    // return res.success({ data: transformKeys(data, "camel") });
   },
 );
 

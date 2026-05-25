@@ -1,5 +1,11 @@
 import { Database } from "@/shared/db/schema";
-import { Kysely, MssqlDialect, ParseJSONResultsPlugin, sql } from "kysely";
+import {
+  Expression,
+  Kysely,
+  MssqlDialect,
+  ParseJSONResultsPlugin,
+  sql,
+} from "kysely";
 import * as tarn from "tarn";
 import * as tedious from "tedious";
 
@@ -37,5 +43,5 @@ export const db = new Kysely<Database>({
   plugins: [new ParseJSONResultsPlugin()],
 });
 
-export const countWhere = (rawCondition: string) =>
-  sql<number>`COALESCE(SUM(CASE WHEN ${sql.raw(rawCondition)} THEN 1 ELSE 0 END), 0)`;
+export const countWhere = <T>(condition: Expression<T>) =>
+  sql<number>`COALESCE(SUM(CASE WHEN ${condition} THEN 1 ELSE 0 END),0)`;
