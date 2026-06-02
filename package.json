@@ -11,10 +11,10 @@
   },
   "dependencies": {
     "@novu/node": "^2.6.6",
-    "better-auth": "^1.6.11",
+    "better-auth": "^1.6.13",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
-    "date-fns": "^4.2.1",
+    "date-fns": "^4.4.0",
     "dotenv": "^17.4.2",
     "exceljs": "^4.4.0",
     "express": "^5.2.1",
@@ -31,12 +31,12 @@
     "@types/express": "^5.0.6",
     "@types/multer": "^2.1.0",
     "@types/node": "^25.9.1",
-    "eslint": "^10.4.0",
+    "eslint": "^10.4.1",
     "nodemon": "^3.1.14",
     "prettier": "^3.8.3",
     "prettier-plugin-organize-imports": "^4.3.0",
-    "tsdown": "^0.22.0",
-    "tsx": "^4.22.3",
+    "tsdown": "^0.22.1",
+    "tsx": "^4.22.4",
     "typescript": "^6.0.3"
   }
 }
