@@ -6,17 +6,18 @@ export default defineConfig([
   {
     files: ["**/*.{js,ts}"],
     rules: {
-      // Enabled rules
+      // Enabled rules (warn)
       "@typescript-eslint/no-unused-vars": "warn",
+      "@typescript-eslint/prefer-nullish-coalescing": "warn",
+
+      // Enabled rules (error)
       "@typescript-eslint/no-explicit-any": "error",
 
-      // Disables rules
+      // Disabled rules
       "import/order": "off",
       "sort-imports": "off",
-
       "no-extra-boolean-cast": "off",
       "@stylistic/spaced-comment": "off",
-
       "@typescript-eslint/array-type": "off",
       "@typescript-eslint/naming-convention": "off",
       "@typescript-eslint/consistent-type-imports": "off",
