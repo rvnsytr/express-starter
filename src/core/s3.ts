@@ -1,8 +1,5 @@
-import {
-  allFileCategories,
-  FileCategory,
-  filesTableSchema,
-} from "@/modules/files/schema";
+import { allFileCategories, FileCategory } from "@/modules/files/config";
+import { filesTableSchema } from "@/modules/files/schema";
 import { allFileTypes, appConfig, fileTypeConfig } from "@/shared/config";
 import { Database } from "@/shared/db/schema";
 import { Request } from "express";

@@ -4,7 +4,8 @@ import {
   withDataController,
 } from "@/core/data-controller";
 import { countWhere, db } from "@/core/db";
-import { allActivityTypes } from "./schema";
+import { sql } from "kysely";
+import { allActivityTypes } from "./config";
 
 const activityQuery = db.selectFrom("activity as ac").select((eb) => [
   "ac.id",
@@ -37,7 +38,7 @@ const activityQuery = db.selectFrom("activity as ac").select((eb) => [
 export const activityCountQuery = db
   .selectFrom("activity as ac")
   .select((eb) => eb.fn.countAll<number>().as("total"))
-  .select(allActivityTypes.map((t) => countWhere(`ac.type = '${t}'`).as(t)));
+  .select(allActivityTypes.map((t) => countWhere(sql`ac.type = '${t}'`).as(t)));
 
 export function getActivityWDCConfig(
   getQB?: (qb: typeof activityQuery) => typeof activityQuery,

@@ -5,7 +5,8 @@ import { sharedSchemas } from "@/core/schema";
 import { Router } from "express";
 import multer from "multer";
 import z from "zod";
-import { allFileCategories, filesTableSchema } from "./schema";
+import { allFileCategories } from "./config";
+import { filesTableSchema } from "./schema";
 
 const router = Router();
 

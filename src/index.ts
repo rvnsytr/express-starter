@@ -4,11 +4,11 @@ import express from "express";
 import z from "zod";
 import { id } from "zod/locales";
 import { errorHandler, init, notFoundHandler } from "./core/middlewares";
+import { appConfig } from "./shared/config";
 
 import { router as activityRoutes } from "./modules/activity/routes";
 import { router as authRoutes } from "./modules/auth/routes";
 import { router as filesRoutes } from "./modules/files/routes";
-import { appConfig } from "./shared/config";
 
 const app = express();
 const port = process.env.PORT ?? 8000;
