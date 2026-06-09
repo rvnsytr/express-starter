@@ -51,14 +51,49 @@ const baseOptionSchema = z.object({
 });
 
 export type UploadFilesOptions = Partial<z.infer<typeof baseOptionSchema>> & {
+  /** ID of the user uploading the files. */
   userId?: string;
 
+  /**
+   * Custom database instance to use for file operations.
+   *
+   * If not provided, the default database instance will be used.
+   */
   db?: Kysely<Database>;
-  category?: FileCategory;
-  allowedCategories?: FileCategory[];
+
+  /**
+   * The directory where files will be uploaded.
+   *
+   * Defaults to `process.env.AWS_DIRECTORY`, or `appConfig.default.fileDirectory` if the environment variable is not set.
+   */
   directory?: string;
 
+  /**
+   * Category of the uploaded files.
+   *
+   * If not provided, the category will be inferred from the file field name.
+   */
+  category?: FileCategory;
+
+  /**
+   * File categories that are allowed for upload.
+   *
+   * If not provided, all categories are allowed.
+   */
+  allowedCategories?: FileCategory[];
+
+  /**
+   * Whether upload options can be overridden via the request body.
+   *
+   * @default false
+   */
   allowBodyOverride?: boolean;
+
+  /**
+   * Whether file uploads are enabled.
+   *
+   * @default true
+   */
   enabled?: boolean;
 };
 
