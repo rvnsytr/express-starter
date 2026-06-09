@@ -1,11 +1,11 @@
 meta {
   name: /api/auth/sign-in/email
   type: http
-  seq: 2
+  seq: 3
 }
 
 post {
-  url: {{host}}/api/auth/sign-in/email
+  url: {{api-url}}/api/auth/sign-in/email
   body: json
   auth: none
 }
@@ -13,8 +13,7 @@ post {
 body:json {
   {
     "email": "example@example.ex",
-    "password": "Example#123",
-    "name": "RvnSytR"
+    "password": "Example#123"
   }
 }
 

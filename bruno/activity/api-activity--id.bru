@@ -5,9 +5,13 @@ meta {
 }
 
 post {
-  url: {{host}}/api/activities/BoZ3ARE5ClXScZsElJ2Zota4ejobEiLy
+  url: {{api-url}}/api/activities/{{userId}}
   body: none
   auth: none
+}
+
+vars:pre-request {
+  userId: 123
 }
 
 settings {
