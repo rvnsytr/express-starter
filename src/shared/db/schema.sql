@@ -98,7 +98,6 @@ CREATE TABLE [file] (
 );
 
 CREATE INDEX IDX_file_category ON [file](category);
-CREATE INDEX IDX_file_file_path ON [file](file_path);
 CREATE INDEX IDX_file_created_by ON [file](created_by);
 CREATE INDEX IDX_file_updated_by ON [file](updated_by);
 CREATE INDEX IDX_file_deleted_by ON [file](deleted_by);
