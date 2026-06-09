@@ -14,7 +14,7 @@ import { formatZodError, getFileNameParts } from "./utils";
 
 const bucket = process.env.AWS_BUCKET!;
 const defaultDirectory =
-  process.env.AWS_DIRECTORY ?? appConfig.defaultFilesDirectory;
+  process.env.AWS_DIRECTORY ?? appConfig.default.fileDirectory;
 
 const s3 = new Client({
   endPoint: process.env.AWS_ENDPOINT!,
@@ -126,8 +126,8 @@ export async function uploadFiles(
       .safeParse({ category: resolvedOptions.category ?? fieldname });
 
     if (!categoryParse.success) {
-      const { displayName } = fileTypeConfig[resolvedOptions.fileType];
-      const message = `Kategori ${displayName} tidak valid pada field '${fieldname}'.`;
+      const { label } = fileTypeConfig[resolvedOptions.fileType];
+      const message = `Kategori ${label} tidak valid pada field '${fieldname}'.`;
       return { ...formatZodError(categoryParse.error), message };
     }
 

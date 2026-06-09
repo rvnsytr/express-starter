@@ -15,7 +15,7 @@ export const allFileTypes = [
 ] as const;
 
 export type FileTypeConfig = {
-  displayName: string;
+  label: string;
   maxSize: number;
   accept: string;
   extensions: string[];
@@ -23,21 +23,21 @@ export type FileTypeConfig = {
 
 const config: Record<Exclude<FileType, "file" | "office">, FileTypeConfig> = {
   image: {
-    displayName: "gambar",
+    label: "gambar",
     maxSize: toBytes(2),
     accept: "image/png, image/jpeg, image/svg+xml, image/webp",
     extensions: [".png", ".jpg", ".jpeg", ".svg", ".webp"],
   },
 
   pdf: {
-    displayName: "PDF",
+    label: "PDF",
     maxSize: toBytes(2),
     accept: "application/pdf",
     extensions: [".pdf"],
   },
 
   document: {
-    displayName: "dokumen",
+    label: "dokumen",
     maxSize: toBytes(2),
     accept: [
       "application/msword",
@@ -47,7 +47,7 @@ const config: Record<Exclude<FileType, "file" | "office">, FileTypeConfig> = {
   },
 
   spreadsheet: {
-    displayName: "lembar kerja (spreadsheet)",
+    label: "lembar kerja (spreadsheet)",
     maxSize: toBytes(2),
     accept: [
       "application/vnd.ms-excel",
@@ -57,7 +57,7 @@ const config: Record<Exclude<FileType, "file" | "office">, FileTypeConfig> = {
   },
 
   presentation: {
-    displayName: "presentasi (ppt)",
+    label: "presentasi (ppt)",
     maxSize: toBytes(10),
     accept: [
       "application/vnd.ms-powerpoint",
@@ -67,7 +67,7 @@ const config: Record<Exclude<FileType, "file" | "office">, FileTypeConfig> = {
   },
 
   archive: {
-    displayName: "arsip",
+    label: "arsip",
     maxSize: toBytes(20),
     accept: [
       "application/zip",
@@ -79,14 +79,14 @@ const config: Record<Exclude<FileType, "file" | "office">, FileTypeConfig> = {
   },
 
   audio: {
-    displayName: "audio",
+    label: "audio",
     maxSize: toBytes(10),
     accept: ["audio/mpeg", "audio/wav", "audio/ogg", "audio/flac"].join(", "),
     extensions: [".mp3", ".wav", ".ogg", ".flac"],
   },
 
   video: {
-    displayName: "video",
+    label: "video",
     maxSize: toBytes(50),
     accept: [
       "video/mp4",
@@ -105,14 +105,14 @@ export const maxFileSize = Math.max(
 
 export const fileTypeConfig: Record<FileType, FileTypeConfig> = {
   file: {
-    displayName: "berkas",
+    label: "berkas",
     maxSize: maxFileSize,
     accept: "*",
     extensions: [],
   },
 
   office: {
-    displayName: "dokumen kantor",
+    label: "dokumen kantor",
     maxSize: toBytes(10),
     accept: [
       ...config.pdf.accept,

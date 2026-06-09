@@ -1,3 +1,4 @@
+import { appConfig } from "@/shared/config";
 import Excel from "exceljs";
 import { promises } from "node:fs";
 import path from "node:path";
@@ -10,7 +11,7 @@ type RowFilterMode = (typeof allRowFilterModes)[number];
 const allRowFilterModes = ["include", "exclude"] as const;
 
 const defaultSheets = ["Sheet1"];
-const defaultTmpDir = "tmp";
+const defaultTmpDir = appConfig.default.excelTmpDirectory;
 const defaultRowFilterMode: RowFilterMode = "include";
 
 export type ReadExcelSheetOptions<S> = {
