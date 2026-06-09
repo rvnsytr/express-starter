@@ -11,7 +11,7 @@ import {
   userTableSchema,
   verificationTableSchema,
 } from "@/modules/auth/schema";
-import { filesTableSchema } from "@/modules/files/schema";
+import { fileTableSchema } from "@/modules/file/schema";
 
 export type Database = {
   user: Override<
@@ -47,8 +47,8 @@ export type Database = {
     }
   >;
 
-  files: Override<
-    z.infer<typeof filesTableSchema>,
+  file: Override<
+    z.infer<typeof fileTableSchema>,
     {
       updated_at: ColumnType<Date, never, Date>;
       created_at: Generated<Date>;

@@ -1,7 +1,7 @@
 import z from "zod";
 import { allFileCategories } from "./config";
 
-export const filesTableSchema = z.object({
+export const fileTableSchema = z.object({
   id: z.uuidv4(),
 
   category: z.enum(allFileCategories),

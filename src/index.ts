@@ -8,7 +8,7 @@ import { appConfig } from "./shared/config";
 
 import { router as activityRoutes } from "./modules/activity/routes";
 import { router as authRoutes } from "./modules/auth/routes";
-import { router as filesRoutes } from "./modules/files/routes";
+import { router as fileRoutes } from "./modules/file/routes";
 
 const app = express();
 const port = process.env.PORT ?? 8000;
@@ -24,7 +24,7 @@ app.use("/api/auth", authRoutes);
 app.get("/api", (_, res) =>
   res.success({ code: 301, message: `Hello, ${appConfig.name}` }),
 );
-app.use("/api/files", filesRoutes);
+app.use("/api/files", fileRoutes);
 app.use("/api/activities", activityRoutes);
 
 app.all("/*splat", notFoundHandler);

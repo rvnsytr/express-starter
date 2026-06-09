@@ -120,7 +120,7 @@ export const auth = betterAuth({
           await db.transaction().execute(async (trx) => {
             if (user.image)
               await trx
-                .updateTable("files")
+                .updateTable("file")
                 .set("deleted_by", session.user.id)
                 .where("id", "=", user.image)
                 .execute();
@@ -153,7 +153,7 @@ export const auth = betterAuth({
     before: createAuthMiddleware(async (ctx) => {
       if (ctx.path === "/update-user" && ctx.body.image) {
         const res = await db
-          .selectFrom("files")
+          .selectFrom("file")
           .select(["updated_at"])
           .where("id", "=", ctx.body.image)
           .executeTakeFirst();
@@ -180,7 +180,7 @@ export const auth = betterAuth({
         if (!userData.image) return ctx.json(session);
 
         const data = await db
-          .selectFrom("files")
+          .selectFrom("file")
           .select("file_path")
           .where("id", "=", userData.image)
           .where("deleted_at", "is", null)
@@ -204,7 +204,7 @@ export const auth = betterAuth({
 
         if (imageId && isImageSame && ctx.body.updatedAt) {
           const res = await db
-            .selectFrom("files")
+            .selectFrom("file")
             .select(["updated_at"])
             .where("id", "=", imageId)
             .executeTakeFirst();

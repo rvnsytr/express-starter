@@ -1,5 +1,5 @@
-import { allFileCategories, FileCategory } from "@/modules/files/config";
-import { filesTableSchema } from "@/modules/files/schema";
+import { allFileCategories, FileCategory } from "@/modules/file/config";
+import { fileTableSchema } from "@/modules/file/schema";
 import { allFileTypes, appConfig, fileTypeConfig } from "@/shared/config";
 import { Database } from "@/shared/db/schema";
 import { Request } from "express";
@@ -155,7 +155,7 @@ export async function uploadFiles(
       buffer,
     } = file;
 
-    const categoryParse = filesTableSchema
+    const categoryParse = fileTableSchema
       .pick({ category: true })
       .refine((v) => allowedCategories.includes(v.category))
       .safeParse({ category: resolvedOptions.category ?? fieldname });
@@ -183,7 +183,7 @@ export async function uploadFiles(
 
     if (isEnabled) {
       const exists = await database
-        .selectFrom("files")
+        .selectFrom("file")
         .select("id")
         .where("file_path", "=", filePath)
         .executeTakeFirst();
@@ -191,7 +191,7 @@ export async function uploadFiles(
       if (exists) {
         id = exists.id;
         await database
-          .updateTable("files")
+          .updateTable("file")
           .set("file_size", fileSize)
           .set("deleted_by", null)
           .set("deleted_at", null)
@@ -201,7 +201,7 @@ export async function uploadFiles(
           .executeTakeFirst();
       } else {
         await database
-          .insertInto("files")
+          .insertInto("file")
           .values({
             id,
             category: category,
@@ -262,7 +262,7 @@ export async function removeFiles(
     let total = 0;
     if (!isDisabled) {
       const { numUpdatedRows } = await database
-        .updateTable("files")
+        .updateTable("file")
         .set({ deleted_by: userId, deleted_at: new Date() })
         .where(searchBy, "in", keys)
         .executeTakeFirst();

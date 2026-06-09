@@ -21,7 +21,7 @@ router.post(
   async (req, res) => {
     const baseQb = db
       .selectFrom("user as u")
-      .leftJoin("files as f", "u.image", "f.id");
+      .leftJoin("file as f", "u.image", "f.id");
 
     const countQb = baseQb
       .select((eb) => eb.fn.countAll<number>().as("total"))
@@ -71,7 +71,7 @@ router.post(
 
     // const rows = await db
     //   .selectFrom("user as u")
-    //   .leftJoin("files as f", "u.image", "f.id")
+    //   .leftJoin("file as f", "u.image", "f.id")
     //   .selectAll("u")
     //   .select("f.file_path")
     //   .execute();

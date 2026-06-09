@@ -6,23 +6,23 @@ import { Router } from "express";
 import multer from "multer";
 import z from "zod";
 import { allFileCategories } from "./config";
-import { filesTableSchema } from "./schema";
+import { fileTableSchema } from "./schema";
 
 const router = Router();
 
 router.get(
   "/",
-  authorize({ files: ["list"] }),
+  authorize({ file: ["list"] }),
   validateRequest({
     body: z.object({
       url: sharedSchemas.boolean("URL").optional().default(false),
-      category: filesTableSchema.shape.category.optional(),
+      category: fileTableSchema.shape.category.optional(),
     }),
   }),
   async (req, res) => {
     const { url: withUrl, category } = req.body;
 
-    let query = db.selectFrom("files").selectAll();
+    let query = db.selectFrom("file").selectAll();
     if (category) query = query.where("category", "=", category);
 
     let data = await query.orderBy("created_at", (ob) => ob.desc()).execute();
@@ -43,11 +43,11 @@ router.get(
 
 router.post(
   "/presigned-url",
-  authorize({ files: ["get"] }),
+  authorize({ file: ["get"] }),
   validateRequest({ body: z.object({ data: z.string().array() }) }),
   async (req, res) => {
     const result = await db
-      .selectFrom("files")
+      .selectFrom("file")
       .select(["id", "file_path"])
       .where("id", "in", req.body.data)
       .execute();
@@ -65,7 +65,7 @@ router.post(
 
 router.post(
   "/",
-  authorize({ files: ["create"] }),
+  authorize({ file: ["create"] }),
   multer().any(),
   async (req, res) => {
     const upload = await uploadFiles(req, {
@@ -83,7 +83,7 @@ router.post(
 
 router.delete(
   "/",
-  authorize({ files: ["delete"] }),
+  authorize({ file: ["delete"] }),
   validateRequest({
     query: z.object({ by: z.enum(["id", "file_path"]).default("id") }),
     body: z.object({ ids: z.array(z.uuidv4()), userId: z.string() }),
