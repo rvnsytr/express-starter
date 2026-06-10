@@ -3,7 +3,7 @@
     "**/core/**": true,
     "**/modules/auth/**": true,
     "**/modules/activity/**": true,
-    "**/modules/files/**": true
+    "**/modules/file/**": true
   },
 
   "files.watcherExclude": { "**/bruno/**": true },

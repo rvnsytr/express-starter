@@ -6,8 +6,8 @@ export const appConfig = {
   baseUrl: "http://localhost:8000",
 
   cors: {
-    origin: "http://localhost:3000",
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    origin: ["http://localhost:3000", "https://example.com"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
   } satisfies CorsOptions,
 

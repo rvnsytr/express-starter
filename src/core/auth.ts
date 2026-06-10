@@ -23,7 +23,7 @@ export const auth = betterAuth({
 
   // secret: process.env.APP_KEY,
   // baseURL: process.env.APP_URL,
-  trustedOrigins: [appConfig.cors.origin],
+  trustedOrigins: appConfig.cors.origin,
 
   database: { dialect: createDialect(), type: "mssql", casing: "snake" },
   experimental: { joins: true },

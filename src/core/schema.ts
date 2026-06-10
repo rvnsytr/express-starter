@@ -16,7 +16,9 @@ export const sharedSchemas = {
     label?: string;
     min?: number;
     max?: number;
+    /** @default true */
     sanitize?: boolean;
+    /** @default false */
     withRequired?: boolean;
   }) => {
     const { invalid, required } = messages;
@@ -52,6 +54,7 @@ export const sharedSchemas = {
     label?: string;
     min?: number;
     max?: number;
+    /** @default false */
     withRequired?: boolean;
   }) => {
     const { invalid, required } = messages;
@@ -335,3 +338,61 @@ export function withSchemaPrefix<P extends string, S extends z.ZodRawShape>(
   ) as { [K in keyof S as `${P}${string & K}`]: S[K] };
   return z.object(prefixedShape);
 }
+
+// export const columnFiltersSchema = z.object({
+//   id: z.string(),
+//   value: z.object({
+//     operator: z.enum(allFilterOperators),
+//     values: z
+//       .union([
+//         z.string(),
+//         z.number(),
+//         z.coerce.date(),
+//         z.union([z.string(), z.number(), z.coerce.date()]).array(),
+//       ])
+//       .array(),
+//     columnMeta: z.object({
+//       label: z.string().exactOptional(),
+//       type: z.enum(allDataFilterType)
+//     }),
+//   }),
+// });
+
+export const countSchema = z.intersection(
+  z.object({ total: z.number() }),
+  z.record(z.string(), z.number()),
+);
+
+export const getActionResponseSchema = <T>(schema: z.ZodType<T>) =>
+  z.discriminatedUnion("success", [
+    z.object({
+      success: z.literal(true),
+      message: z.string().exactOptional(),
+      count: countSchema.exactOptional(),
+      data: schema,
+    }),
+    z.object({
+      success: z.literal(false),
+      message: z.string(),
+      error: z.unknown().exactOptional(),
+    }),
+  ]);
+
+export const getApiResponseSchema = <T>(schema: z.ZodType<T>) =>
+  z.intersection(
+    z.object({
+      code: z.number(),
+      message: z.string(),
+    }),
+    z.discriminatedUnion("success", [
+      z.object({
+        success: z.literal(true),
+        count: countSchema.exactOptional(),
+        data: schema,
+      }),
+      z.object({
+        success: z.literal(false),
+        error: z.unknown().exactOptional(),
+      }),
+    ]),
+  );

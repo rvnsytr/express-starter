@@ -1,27 +1,16 @@
 import z from "zod";
-import { sharedSchemas } from "./schema";
+import {
+  countSchema,
+  getActionResponseSchema,
+  getApiResponseSchema,
+  sharedSchemas,
+} from "./schema";
 
 export type Override<T, U> = Omit<T, keyof U> & U;
 
 export type OmitByType<T, V> = {
   [K in keyof T as T[K] extends V ? never : K]: T[K];
 };
-
-export type Count = ({ total: number } & Record<string, number>) | undefined;
-
-export type ActionResponse<T = unknown> = {
-  message?: string;
-} & (
-  | { success: true; count?: Count; data: T }
-  | { success: false; error?: unknown }
-);
-
-export type ActionSuccess<T = unknown> = Extract<
-  ActionResponse<T>,
-  { success: true }
->;
-
-export type ActionError = Extract<ActionResponse, { success: false }>;
 
 export type StringCase =
   | "kebab"
@@ -75,18 +64,33 @@ export type FileWithPreview = z.infer<
   ReturnType<typeof sharedSchemas.fileWithPreview>
 >;
 
-export type ApiSuccessPayload<T = null> = {
-  code?: number;
-  message?: string;
-  count?: Count;
-  data?: T;
-};
+export type Count = z.infer<typeof countSchema>;
 
-export type ApiErrorPayload = {
-  code?: number;
-  message?: string;
-  error?: unknown;
-};
+export type ActionResponse<T = unknown> = z.infer<
+  ReturnType<typeof getActionResponseSchema<T>>
+>;
+
+export type ActionSuccess<T = unknown> = Extract<
+  ActionResponse<T>,
+  { success: true }
+>;
+
+export type ActionError = Extract<ActionResponse, { success: false }>;
+
+export type ApiResponse<T = unknown> = z.infer<
+  ReturnType<typeof getApiResponseSchema<T>>
+>;
+
+export type ApiSuccess<T = unknown> = Extract<
+  ApiResponse<T>,
+  { success: true }
+>;
+
+export type ApiSuccessPayload<T = null> = Partial<ApiSuccess<T>>;
+
+export type ApiError = Extract<ApiResponse, { success: false }>;
+
+export type ApiErrorPayload = Partial<ApiError>;
 
 export type RequestPart =
   | "params"
